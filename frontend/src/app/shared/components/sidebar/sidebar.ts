@@ -41,7 +41,10 @@ export class Sidebar implements OnInit {
 
   private loadFriends(): void {
     this.userService.loadFriends().subscribe({
-      next: friends => this.chatStateService.syncFriendStatuses(friends)
+      next: friends => this.chatStateService.syncFriendStatuses(friends),
+      error: () => {
+        // Handle error gracefully to avoid logging a secondary uncaught exception stack trace when backend is offline
+      }
     });
   }
 
@@ -66,6 +69,17 @@ export class Sidebar implements OnInit {
 
   getAvatarLetter(username: string): string {
     return username ? username.charAt(0).toUpperCase() : '?';
+  }
+
+  hideBrokenAvatar(event: Event): void {
+    const image = event.target as HTMLImageElement | null;
+    if (!image) return;
+
+    image.style.display = 'none';
+    const fallback = image.nextElementSibling as HTMLElement | null;
+    if (fallback) {
+      fallback.hidden = false;
+    }
   }
 
   openChat(friend: FriendEntry): void {

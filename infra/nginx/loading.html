@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>CodeArena - Initializing</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/loading.css">
+</head>
+<body>
+  <div id="loading-page-identifier" hidden></div>
+  <section class="app-loading-screen" aria-live="polite" aria-busy="true">
+    <div class="app-loading-backdrop" aria-hidden="true"></div>
+
+    <div class="app-loading-card">
+      <p class="app-loading-kicker">System Startup</p>
+      <h1 class="app-loading-brand">
+        <span class="app-loading-brand-mark">&lt;</span>
+        CodeArena
+        <span class="app-loading-brand-mark">/&gt;</span>
+      </h1>
+
+      <div class="app-loading-progress" role="progressbar" aria-label="Loading application"></div>
+
+      <p class="app-loading-text">Initializing services... Please wait.</p>
+    </div>
+  </section>
+
+  <script src="/loading.js" defer></script>
+</body>
+</html>

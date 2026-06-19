@@ -59,37 +59,7 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
   ngOnInit(): void {
     loader.config({ paths: { vs: 'assets/monaco/vs' } });
 
-    loader.init().then((monaco) => {
-      this.monaco = monaco;
-      this.defineCustomThemes(monaco);
-
-      const editor = monaco.editor.create(this.containerRef.nativeElement, {
-        value: this.value,
-        language: LANGUAGE_MAP[this.language] ?? 'plaintext',
-        theme: this.resolveTheme(),
-        readOnly: false,
-        automaticLayout: true,
-        minimap: { enabled: false },
-        scrollBeyondLastLine: false,
-        fontFamily: '"JetBrains Mono", "Courier New", monospace',
-        fontSize: 13,
-        lineHeight: 20,
-        renderLineHighlight: 'none',
-        overviewRulerLanes: 0,
-        hideCursorInOverviewRuler: true,
-        scrollbar: {
-          verticalScrollbarSize: 6,
-          horizontalScrollbarSize: 6,
-        },
-        padding: { top: 12, bottom: 12 },
-      });
-      this.editor = editor;
-
-      // Forward content changes for future use
-      editor.onDidChangeModelContent(() => {
-        this.valueChange.emit(editor.getValue());
-      });
-    });
+    void this.initializeMonaco();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -120,8 +90,72 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
 
   // ── Helpers ────────────────────────────────────────────────────────────
 
+  private async initializeMonaco(): Promise<void> {
+    await this.withDefinePropertyCompatibility(async () => {
+      const monaco = await loader.init();
+      this.monaco = monaco;
+      this.defineCustomThemes(monaco);
+
+      const editor = monaco.editor.create(this.containerRef.nativeElement, {
+        value: this.value,
+        language: LANGUAGE_MAP[this.language] ?? 'plaintext',
+        theme: this.resolveTheme(),
+        readOnly: false,
+        automaticLayout: true,
+        minimap: { enabled: false },
+        scrollBeyondLastLine: false,
+        fontFamily: '"JetBrains Mono", "Courier New", monospace',
+        fontSize: 13,
+        lineHeight: 20,
+        renderLineHighlight: 'none',
+        overviewRulerLanes: 0,
+        hideCursorInOverviewRuler: true,
+        scrollbar: {
+          verticalScrollbarSize: 6,
+          horizontalScrollbarSize: 6,
+        },
+        padding: { top: 12, bottom: 12 },
+      });
+      this.editor = editor;
+
+      // Add id/name attributes to the internal textarea to satisfy accessibility/autofill checks
+      const textarea = this.containerRef.nativeElement.querySelector('textarea');
+      if (textarea) {
+        textarea.setAttribute('id', 'monaco-textarea-' + Math.random().toString(36).substring(2, 11));
+        textarea.setAttribute('name', 'monaco-textarea');
+      }
+
+      // Forward content changes for future use
+      editor.onDidChangeModelContent(() => {
+        this.valueChange.emit(editor.getValue());
+      });
+    });
+  }
+
   private resolveTheme(): string {
     return this.theme === 'Light' ? 'arena-light' : 'arena-dark';
+  }
+
+  private async withDefinePropertyCompatibility<T>(callback: () => Promise<T>): Promise<T> {
+    const originalDefineProperty = Object.defineProperty;
+
+    if (typeof originalDefineProperty !== 'function') {
+      return callback();
+    }
+
+    Object.defineProperty = function(obj: any, prop: PropertyKey, descriptor: PropertyDescriptor) {
+      if (descriptor === undefined) {
+        return obj;
+      }
+
+      return originalDefineProperty(obj, prop, descriptor);
+    };
+
+    try {
+      return await callback();
+    } finally {
+      Object.defineProperty = originalDefineProperty;
+    }
   }
 
   private defineCustomThemes(monaco: typeof Monaco): void {
