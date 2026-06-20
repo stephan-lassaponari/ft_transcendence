@@ -14,13 +14,9 @@ import {
   SubmissionResult,
   TestCaseResult,
   RunResult,
-  mockWrongAnswerResult,
-  mockCorrectAnswerResult,
-  mockRunSuccess,
-  mockRunCompileError,
 } from './submission-result.model';
 
-export type PanelTab = 'Problem' | 'Submissions';
+export type PanelTab = 'Problem';
 
 @Component({
   selector: 'app-arena-page',
@@ -59,11 +55,35 @@ export class ArenaPage implements OnInit, OnDestroy {
   readonly challengeTitle = signal<string>('Loading challenge...');
   readonly challengeDescription = signal<string>('Please wait while we fetch the problem details...');
   readonly formattedDescription = computed(() => {
-    // Replace literal '\n' string with HTML line breaks
-    return this.challengeDescription().replace(/\\n/g, '<br>');
+    const raw = this.challengeDescription();
+    // Handle both literal '\n' strings and real newline characters
+    const text = raw.replace(/\\n/g, '\n');
+    // Convert to structured HTML
+    return text
+      .split('\n')
+      .map(line => {
+        const trimmed = line.trim();
+        if (!trimmed) return '';
+        // Bullet points: lines starting with -
+        if (trimmed.startsWith('- ')) {
+          return `<li>${trimmed.substring(2)}</li>`;
+        }
+        // Function signatures and code-like lines
+        if (/^(void|int|char|unsigned|float|double|long|short|typedef|struct)\s/.test(trimmed)) {
+          return `<code>${trimmed}</code>`;
+        }
+        // Section headers (e.g. "Requirements:", "Rules:", "Function signature:")
+        if (/^[A-Z][\w\s]+:$/.test(trimmed)) {
+          return `<strong>${trimmed}</strong>`;
+        }
+        return `<p>${trimmed}</p>`;
+      })
+      .join('\n')
+      // Wrap consecutive <li> elements in <ul>
+      .replace(/(<li>.*?<\/li>\n?)+/gs, (match) => `<ul>${match}</ul>`);
   });
 
-  readonly panelTabs: PanelTab[] = ['Problem', 'Submissions'];
+  readonly panelTabs: PanelTab[] = ['Problem'];
   activeTab = signal<PanelTab>('Problem');
 
   readonly languages = ['C', 'C++', 'Java', 'Python 3', 'JavaScript'];
@@ -72,17 +92,8 @@ export class ArenaPage implements OnInit, OnDestroy {
   readonly themes: EditorTheme[] = ['Dark', 'Light'];
   selectedTheme = signal<EditorTheme>('Dark');
 
-  code = signal(
-`#include <stdio.h>
-#include <string.h>
-#include <math.h>
-#include <stdlib.h>
-
-int main() {
-
-    /* Enter your code here. Read input from STDIN. Print output to STDOUT */
-    return 0;
-}`);
+  /** Editor code – starts empty; populated from solutionTemplate once the challenge loads. */
+  code = signal('');
 
   testInput = signal('');
   showTestInput = signal(false);
@@ -119,6 +130,22 @@ int main() {
           next: (challenge) => {
             this.challengeTitle.set(challenge.title);
             this.challengeDescription.set(challenge.description);
+
+            // Populate editor with the challenge's solution template (function stub).
+            // Falls back to a generic C boilerplate if the challenge has no template.
+            if (challenge.solutionTemplate) {
+              this.code.set(challenge.solutionTemplate);
+            } else {
+              this.code.set(
+`#include <stdio.h>
+#include <stdlib.h>
+
+int main() {
+
+    /* Enter your code here. Read input from STDIN. Print output to STDOUT */
+    return 0;
+}`);
+            }
           },
           error: (err) => {
             console.error('Failed to load challenge details:', err);
@@ -164,9 +191,12 @@ int main() {
                this.handleDuelEvent({
                   type: 'DUEL_COMPLETED',
                   winnerId: status.winnerId,
+                  challengerId: status.challengerId,
+                  opponentId: status.opponentId,
                   challengerScore: status.challengerScore,
                   opponentScore: status.opponentScore,
-                  challengerEloDelta: status.challengerEloDelta
+                  challengerEloDelta: status.challengerEloDelta,
+                  opponentEloDelta: status.opponentEloDelta
                });
             }
           }
@@ -230,10 +260,17 @@ int main() {
         if (event.reason === 'TIMEOUT' && event.winnerId !== 'DRAW') {
           headline = event.winnerId === this.myId() ? 'Won by Timeout!' : 'Lost by Timeout!';
         }
+
+        // Determine if current user is the challenger or the opponent
+        const isChallenger = event.challengerId ? (this.myId() === event.challengerId) : true;
+        const myScore = isChallenger ? event.challengerScore : event.opponentScore;
+        const opScore = isChallenger ? event.opponentScore : event.challengerScore;
+        const myEloDelta = isChallenger ? event.challengerEloDelta : event.opponentEloDelta;
+
         this.submissionResult.set({
            verdict: 'success',
            headline: headline,
-           summary: `Score: ${event.challengerScore} vs ${event.opponentScore}. Elo: ${event.challengerEloDelta > 0 ? '+' : ''}${event.challengerEloDelta}`,
+           summary: `Score: ${myScore} vs ${opScore}. Elo: ${myEloDelta > 0 ? '+' : ''}${myEloDelta}`,
            testCases: []
         });
 
@@ -333,15 +370,36 @@ int main() {
     this.showTestInput.set(!this.showTestInput());
   }
 
+  /** Whether a run request is currently in-flight. */
+  runLoading = signal(false);
+
   runCode(): void {
-    // TODO: replace with real backend call;
-    // map HTTP response to RunResult and call:
-    const result = mockRunSuccess(); // swap to mockRunCompileError() to test
-    this.runResult.set(result);
-    this.runPanelOpen.set(true);
-    // Close submit panel to avoid overlap
-    this.closeResultPanel();
-    console.log('Running code:', this.code());
+    const did = this.duelId();
+    if (!did || !this.isDuelActive() || this.runLoading()) return;
+
+    this.runLoading.set(true);
+    this.duelService.runCode(did, {
+      code: this.code(),
+      language: this.selectedLanguage(),
+      stdin: this.testInput() || undefined,
+    }).subscribe({
+      next: (result) => {
+        this.runResult.set(result);
+        this.runPanelOpen.set(true);
+        this.closeResultPanel();
+        this.runLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Run code failed:', err);
+        this.runResult.set({
+          status: 'runtime_error',
+          headline: 'Request Failed',
+          stderr: err?.error?.error || 'Network error or server unavailable',
+        });
+        this.runPanelOpen.set(true);
+        this.runLoading.set(false);
+      }
+    });
   }
 
   // ── Run result panel ─────────────────────────────────────────────────

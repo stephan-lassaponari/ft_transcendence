@@ -109,7 +109,7 @@ export class WebSocketService implements OnDestroy {
             ) {
               try {
                 subscription?.unsubscribe();
-              } catch {
+              } catch (err) {
                 // Ignore any transmission errors on closed/closing sockets
               }
             }

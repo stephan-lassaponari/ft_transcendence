@@ -40,7 +40,7 @@ public class DuelEvaluationService {
     private final TransactionTemplate transactionTemplate;
     private final ObjectMapper objectMapper = new ObjectMapper()
             .configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    
+
     @Autowired
     @Lazy
     private DuelLifecycleService lifecycleService;
@@ -48,10 +48,9 @@ public class DuelEvaluationService {
     @Transactional
     public void evaluateDuel(Long duelId) {
         Duel duel = duelRepository.findById(duelId).orElseThrow();
-        
-        // Prevent double evaluation
-        if (duel.getStatus() == Duel.DuelStatus.EVALUATING || 
-            duel.getStatus() == Duel.DuelStatus.COMPLETED) {
+
+        // Prevent double evaluation or evaluating finished duels
+        if (duel.getStatus() != Duel.DuelStatus.IN_PROGRESS) {
             return;
         }
 
@@ -60,7 +59,7 @@ public class DuelEvaluationService {
 
         duel.setStatus(Duel.DuelStatus.EVALUATING);
         duelRepository.save(duel);
-        
+
         lifecycleService.broadcastEvent(duelId, "DUEL_EVALUATING", Map.of());
 
         // We run evaluation async so we don't block the calling thread (e.g. submit thread)
@@ -71,7 +70,7 @@ public class DuelEvaluationService {
         try {
             Duel duel = duelRepository.findById(duelId).orElseThrow();
             Challenge challenge = challengeRepository.findById(duel.getChallengeId()).orElseThrow();
-            
+
             // Parse test cases
             List<JudgeRequest.TestCaseInput> testCases = objectMapper.convertValue(
                     challenge.getTestCases(),
@@ -83,8 +82,8 @@ public class DuelEvaluationService {
             Submission sub2 = getOrCreateDummySubmission(duelId, duel.getOpponentId(), challenge.getTimeLimitSecs());
 
             // Judge both sequentially
-            JudgeResponse resp1 = judgeSubmission(sub1, testCases);
-            JudgeResponse resp2 = judgeSubmission(sub2, testCases);
+            JudgeResponse resp1 = judgeSubmission(sub1, testCases, challenge);
+            JudgeResponse resp2 = judgeSubmission(sub2, testCases, challenge);
 
             // Calculate scores
             calculateScores(sub1, resp1, challenge.getTimeLimitSecs());
@@ -115,6 +114,8 @@ public class DuelEvaluationService {
                 duelRepository.save(duel);
                 lifecycleService.broadcastEvent(duelId, "DUEL_COMPLETED", Map.of(
                     "winnerId", "DRAW",
+                    "challengerId", duel.getChallengerId(),
+                    "opponentId", duel.getOpponentId(),
                     "challengerScore", 0,
                     "opponentScore", 0,
                     "challengerEloDelta", 0,
@@ -140,12 +141,20 @@ public class DuelEvaluationService {
                 });
     }
 
-    private JudgeResponse judgeSubmission(Submission sub, List<JudgeRequest.TestCaseInput> testCases) {
+    private JudgeResponse judgeSubmission(Submission sub, List<JudgeRequest.TestCaseInput> testCases, Challenge challenge) {
         if (sub.getCode() == null || sub.getCode().isBlank()) {
             return new JudgeResponse(false, testCases.size(), 0, 0, 0, "No code submitted", new ArrayList<>());
         }
-        
-        JudgeRequest req = new JudgeRequest(sub.getCode(), sub.getLanguage(), testCases);
+
+        // When the challenge has a test_harness, the user writes only a function
+        // (no int main).  Concatenate user code + harness into a single compilable
+        // source before sending to Judge0.
+        String sourceCode = sub.getCode();
+        if (challenge.getTestHarness() != null && !challenge.getTestHarness().isBlank()) {
+            sourceCode = sub.getCode() + "\n" + challenge.getTestHarness();
+        }
+
+        JudgeRequest req = new JudgeRequest(sourceCode, sub.getLanguage(), testCases);
         return judgeService.judge(req);
     }
 
@@ -161,14 +170,14 @@ public class DuelEvaluationService {
         }
 
         double correctness = ((double) resp.passedTests() / resp.totalTests()) * 100.0;
-        
+
         // Time score: 0 to 100
         double timeRatio = Math.max(0.0, (double) (timeLimitSecs - sub.getTimeTakenSecs()) / timeLimitSecs);
         double time = timeRatio * 100.0;
 
         // Perf score: base 100, lose points for slow runtime
         double perf = Math.max(0.0, 100.0 - (resp.runtimeMs() / 10.0));
-        
+
         // Quality: flat 100 for now if it compiles and passes something
         double quality = 100.0;
 
@@ -197,20 +206,9 @@ public class DuelEvaluationService {
             winnerId = opponent.getId();
             duel.setStatus(Duel.DuelStatus.COMPLETED);
         } else {
-            // Scores are equal. Tie-break by time.
-            if (sub1.getTimeTakenSecs() < sub2.getTimeTakenSecs()) {
-                winnerId = challenger.getId();
-                duel.setStatus(Duel.DuelStatus.COMPLETED);
-                log.info("Duel {} - Challenger won by speed tie-break (score={})", duel.getId(), sub1.getScore());
-            } else if (sub2.getTimeTakenSecs() < sub1.getTimeTakenSecs()) {
-                winnerId = opponent.getId();
-                duel.setStatus(Duel.DuelStatus.COMPLETED);
-                log.info("Duel {} - Opponent won by speed tie-break (score={})", duel.getId(), sub2.getScore());
-            } else {
-                // Exactly same score and same time
-                duel.setStatus(Duel.DuelStatus.DRAW);
-                log.info("Duel {} - Draw (score={}, time={})", duel.getId(), sub1.getScore(), sub1.getTimeTakenSecs());
-            }
+            // Scores are equal. Draw.
+            duel.setStatus(Duel.DuelStatus.DRAW);
+            log.info("Duel {} - Draw (score={})", duel.getId(), sub1.getScore());
         }
 
         duel.setWinnerId(winnerId);
@@ -220,25 +218,30 @@ public class DuelEvaluationService {
         int[] eloChanges = calculateEloDelta(challenger.getElo(), opponent.getElo(), winnerId, challenger.getId(), opponent.getId());
         duel.setChallengerEloChange(eloChanges[0]);
         duel.setOpponentEloChange(eloChanges[1]);
-        
+
         duelRepository.save(duel);
 
         // Update Users
         updateUserStats(challenger, eloChanges[0], winnerId != null && winnerId.equals(challenger.getId()), winnerId == null);
         updateUserStats(opponent, eloChanges[1], winnerId != null && winnerId.equals(opponent.getId()), winnerId == null);
-        
+
         // Reset status
         challenger.setStatus(User.UserStatus.ONLINE);
         opponent.setStatus(User.UserStatus.ONLINE);
-        
+
         userRepository.save(challenger);
         userRepository.save(opponent);
 
         log.info("Duel {} completed. Winner: {}", duel.getId(), winnerId);
 
+        // Recalculate LEGEND league for top 1% of MASTER+ players
+        recalculateMasterLeagues();
+
         // Broadcast completion
         lifecycleService.broadcastEvent(duel.getId(), "DUEL_COMPLETED", Map.of(
             "winnerId", winnerId != null ? winnerId : "DRAW",
+            "challengerId", duel.getChallengerId(),
+            "opponentId", duel.getOpponentId(),
             "challengerScore", sub1.getScore(),
             "opponentScore", sub2.getScore(),
             "challengerEloDelta", eloChanges[0],
@@ -248,25 +251,38 @@ public class DuelEvaluationService {
     }
 
     private int[] calculateEloDelta(int elo1, int elo2, Long winnerId, Long p1Id, Long p2Id) {
+        // Draw: no ELO change
+        if (winnerId == null) {
+            return new int[]{0, 0};
+        }
+
         double k = 32.0;
         double expected1 = 1.0 / (1.0 + Math.pow(10, (elo2 - elo1) / 400.0));
         double expected2 = 1.0 / (1.0 + Math.pow(10, (elo1 - elo2) / 400.0));
 
-        double actual1 = 0.5, actual2 = 0.5;
-        if (winnerId != null) {
-            if (winnerId.equals(p1Id)) {
-                actual1 = 1.0;
-                actual2 = 0.0;
-            } else {
-                actual1 = 0.0;
-                actual2 = 1.0;
-            }
+        double actual1, actual2;
+        if (winnerId.equals(p1Id)) {
+            actual1 = 1.0;
+            actual2 = 0.0;
+        } else {
+            actual1 = 0.0;
+            actual2 = 1.0;
         }
 
         int delta1 = (int) Math.round(k * (actual1 - expected1));
         int delta2 = (int) Math.round(k * (actual2 - expected2));
 
+        if (delta1 > 0) delta1 += 50;
+        else if (delta1 < 0) delta1 -= 35;
+
+        if (delta2 > 0) delta2 += 50;
+        else if (delta2 < 0) delta2 -= 35;
+
         return new int[]{delta1, delta2};
+    }
+
+    private void recalculateMasterLeagues() {
+        userRepository.recalculateMasterLeagues();
     }
 
     private void updateUserStats(User user, int eloDelta, boolean won, boolean draw) {
@@ -278,7 +294,7 @@ public class DuelEvaluationService {
             user.setLosses(user.getLosses() + 1);
             user.setWinStreak(0);
         }
-        
+
         // Update League
         int e = user.getElo();
         if (e >= 3000) user.setLeague(User.League.MASTER);
