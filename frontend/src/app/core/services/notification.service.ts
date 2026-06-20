@@ -1,6 +1,7 @@
 import { DestroyRef, inject, Injectable, signal } from "@angular/core";
 import { SocketState, WebSocketService } from "./websocket.service";
 import { ChatStateService } from "./chat-state.service";
+import { UserService } from "./user.service";
 import { NotificationPayload } from "../../shared/models/notification.model";
 import { filter, Subscription, switchMap } from "rxjs";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
@@ -11,6 +12,7 @@ import { environment } from "../../../environments/environment";
 export class NotificationService {
   private wsService = inject(WebSocketService);
   private chatState = inject(ChatStateService);
+  private userService = inject(UserService);
   private destroyRef = inject(DestroyRef);
   private http = inject(HttpClient);
   private baseUrl = `${environment.apiUrl}/notifications`
@@ -50,6 +52,12 @@ export class NotificationService {
       } else {
         this.markRead([n.id]);
       }
+    } else if (n.type === 'FRIEND_REQUEST') {
+      this.userService.loadPendingRequests().subscribe();
+      this._notifications.update(list => [n, ...list]);
+    } else if (n.type === 'FRIEND_ACCEPTED') {
+      this.userService.loadFriends().subscribe();
+      this._notifications.update(list => [n, ...list]);
     } else {
       this._notifications.update(list => [n, ...list]);
     }
@@ -74,6 +82,9 @@ export class NotificationService {
   private markRead(ids: number[]): void {
     ids.forEach(id =>
       this.http.patch(`${this.baseUrl}/${id}/read`, {}).subscribe()
+    );
+    this._notifications.update(list =>
+      list.map(n => ids.includes(n.id) ? { ...n, read: true } : n)
     );
   }
 

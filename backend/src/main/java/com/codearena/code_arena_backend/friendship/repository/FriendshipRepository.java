@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface FriendshipRepository extends JpaRepository<Friendship, FriendshipId> {
@@ -15,6 +16,8 @@ public interface FriendshipRepository extends JpaRepository<Friendship, Friendsh
     List<Friendship> findByUserIdAndStatus(Long userId, String status);
 
     boolean existsByUserIdAndFriendId(Long userId, Long friendId);
+
+    boolean existsByUserIdAndFriendIdAndStatus(Long userId, Long friendId, String status);
 
     void deleteByUserIdAndFriendId(Long userId, Long friendId);
     @Query("SELECT f FROM Friendship f WHERE (f.userId = :userId OR f.friendId = :userId) AND f.status = 'ACCEPTED'")
@@ -26,4 +29,6 @@ public interface FriendshipRepository extends JpaRepository<Friendship, Friendsh
 	@Modifying
 	@Query("DELETE FROM Friendship f WHERE f.userId = :userId OR f.friendId = :userId")
 	void deleteAllByParticipant(Long userId);
+
+	Optional<Friendship> findByUserIdAndFriendId(Long userId, Long friendId);
 }

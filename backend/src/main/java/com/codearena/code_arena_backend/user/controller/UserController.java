@@ -4,6 +4,7 @@ import com.codearena.code_arena_backend.duel.dto.MatchHistoryResponse;
 import com.codearena.code_arena_backend.duel.entity.Duel;
 import com.codearena.code_arena_backend.duel.entity.Duel.DuelStatus;
 import com.codearena.code_arena_backend.duel.repository.DuelRepository;
+import com.codearena.code_arena_backend.friendship.dto.FriendRequestResponse;
 import com.codearena.code_arena_backend.friendship.dto.FriendResponse;
 import com.codearena.code_arena_backend.friendship.repository.FriendshipRepository;
 import com.codearena.code_arena_backend.ranking.service.RankingService;
@@ -12,6 +13,7 @@ import com.codearena.code_arena_backend.user.dto.UpdatePasswordRequest;
 import com.codearena.code_arena_backend.user.dto.UpdateUserProfileRequest;
 import com.codearena.code_arena_backend.user.dto.UserAvatarResource;
 import com.codearena.code_arena_backend.user.dto.UserProfileResponse;
+import com.codearena.code_arena_backend.user.dto.UserSearchResultResponse;
 import com.codearena.code_arena_backend.user.entity.User;
 import com.codearena.code_arena_backend.user.service.UserProfileService;
 import com.codearena.code_arena_backend.user.service.UserService;
@@ -31,6 +33,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -126,11 +129,31 @@ public class UserController {
         return ResponseEntity.ok(userProfileService.listMyFriends(username));
     }
 
+    @GetMapping("/me/friends/pending")
+    public ResponseEntity<List<FriendRequestResponse>> listPendingRequests(Authentication authentication) {
+        String username = authentication.getName();
+        return ResponseEntity.ok(userProfileService.listPendingRequests(username));
+    }
+
     @PostMapping("/me/friends/{id}")
     public ResponseEntity<Void> addFriend(Authentication authentication, @PathVariable Long id) {
         String username = authentication.getName();
-        userProfileService.addFriend(username, id);
+        userProfileService.sendFriendRequest(username, id);
         return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+	@PostMapping("/me/friends/{id}/accept")
+    public ResponseEntity<Void> acceptFriendRequest(Authentication authentication, @PathVariable Long id) {
+        String username = authentication.getName();
+        userProfileService.acceptFriendRequest(username, id);
+        return ResponseEntity.noContent().build();
+    }
+
+	@PostMapping("/me/friends/{id}/reject")
+    public ResponseEntity<Void> rejectFriendRequest(Authentication authentication, @PathVariable Long id) {
+        String username = authentication.getName();
+        userProfileService.rejectFriendRequest(username, id);
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/me/friends/{id}")
@@ -145,6 +168,12 @@ public class UserController {
         String username = authentication.getName();
         return ResponseEntity.ok(userProfileService.listOnlineFriends(username));
     }
+
+	@GetMapping("/search")
+	public ResponseEntity<List<UserSearchResultResponse>> searchUsers(Authentication authentication, @RequestParam String q) {
+		String username = authentication.getName();
+		return ResponseEntity.ok(userProfileService.searchUsers(username, q));
+	}
 
     // ------------------------------------------------------------------ //
     //  Match history endpoint (from duel/ranking branch)                  //

@@ -35,14 +35,49 @@
     <div class="sidebar-tabs">
       <button class="tab-btn" [class.active]="activeTab() === 'friends'" (click)="setActiveTab('friends')">
         Friends
+        @if (pendingRequests().length > 0) {
+          <span class="unread-badge notification-badge">{{ pendingRequests().length }}</span>
+        }
       </button>
       <button class="tab-btn" [class.active]="activeTab() === 'notifications'" (click)="setActiveTab('notifications')">
         Notifications
       </button>
+      <button class="add-friend-btn" title="Add friend" (click)="openAddFriendModal()">+</button>
     </div>
+
+    <app-add-friend-modal [open]="showAddFriendModal()" (closed)="closeAddFriendModal()" />
+
+    <app-modal [open]="showRemoveConfirmModal()" (closed)="closeRemoveConfirmModal()">
+      <div class="confirm-modal">
+        <div class="confirm-modal-header">
+          <span class="confirm-modal-title">Remove Friend</span>
+          <button class="close-btn" (click)="closeRemoveConfirmModal()">&times;</button>
+        </div>
+        <div class="confirm-modal-body">
+          <p>Are you sure you want to remove <strong>{{ friendToRemove()?.username }}</strong> from your friends list?</p>
+        </div>
+        <div class="confirm-modal-actions">
+          <button class="btn-cancel" (click)="closeRemoveConfirmModal()">Cancel</button>
+          <button class="btn-confirm-remove" (click)="executeRemoveFriend()">Remove</button>
+        </div>
+      </div>
+    </app-modal>
 
     <div class="sidebar-content">
       @if (activeTab() === 'friends') {
+      @if (pendingRequests().length > 0) {
+      <div class="pending-requests">
+        @for (req of pendingRequests(); track req.requesterId) {
+          <div class="pending-item">
+            <span class="pending-username">{{ req.username }}</span>
+            <div class="pending-actions">
+              <button class="pending-accept-btn" (click)="acceptRequest(req.requesterId)">Accept</button>
+              <button class="pending-reject-btn" (click)="rejectRequest(req.requesterId)">Reject</button>
+            </div>
+          </div>
+        }
+      </div>
+      }
       <div class="friends-list">
         @for (friend of friends(); track friend.id) {
         <div class="friend-item" (click)="openChat(friend)">
@@ -59,6 +94,7 @@
           @if (getUnread(friend.id) > 0) {
             <span class="unread-badge">{{ getUnread(friend.id) }}</span>
           }
+          <button class="remove-friend-btn" title="Remove friend" (click)="confirmRemoveFriend(friend, $event)">&times;</button>
         </div>
         }
         @empty {
@@ -82,7 +118,7 @@
         }
         @for (n of notificationService.notifications(); track n.id) {
           <div class="notification-item" [class.unread]="!n.read">
-            <span class="notification-type">{{ formatType(n.type) }}</span>
+            <span class="notification-type">{{ notificationLabel(n) }}</span>
             <span class="notification-time">{{ n.createdAt | date:'HH:mm' }}</span>
           </div>
         }

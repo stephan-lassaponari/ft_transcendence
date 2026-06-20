@@ -6,12 +6,15 @@ import { UserService } from '../../../core/services/user.service';
 import type { FriendEntry } from '../../models/user-profile.model';
 import { ChatStateService } from '../../../core/services/chat-state.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import type { NotificationPayload } from '../../models/notification.model';
 import { DatePipe } from '@angular/common';
 import { statusClass } from '../../utils/status.utils';
+import { AddFriendModal } from '../add-friend-modal/add-friend-modal';
+import { Modal } from '../modal/modal';
 
 @Component({
   selector: 'app-sidebar',
-  imports: [DatePipe],
+  imports: [DatePipe, AddFriendModal, Modal],
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.css',
 })
@@ -26,15 +29,24 @@ export class Sidebar implements OnInit {
   username = this.userService.username;
   avatarLetter = this.userService.avatarLetter;
   friends = this.userService.friends;
+  pendingRequests = this.userService.pendingRequests;
   totalUnread = computed(() => {
     const windowTotal = this.chatStateService.windows().reduce((sum, w) => sum + w.unread, 0);
     const pendingTotal = Object.values(this.chatStateService.pendingUnread())
                           .reduce((sum, n) => sum + n, 0);
-    return windowTotal + pendingTotal;
+    const friendRequestTotal = this.pendingRequests().length;
+    // FRIEND_REQUEST is excluded here since it's already counted via friendRequestTotal above.
+    const otherNotificationsTotal = this.notificationService.notifications()
+      .filter(n => !n.read && n.type !== 'FRIEND_REQUEST')
+      .length;
+    return windowTotal + pendingTotal + friendRequestTotal + otherNotificationsTotal;
   }
   );
 
   activeTab = signal<'friends' | 'notifications'>('friends');
+  showAddFriendModal = signal(false);
+  showRemoveConfirmModal = signal(false);
+  friendToRemove = signal<FriendEntry | null>(null);
 
   // Delegado ao serviço compartilhado para evitar duplicação de lógica de rota.
   isLobby = this.routeState.isLobby;
@@ -48,16 +60,66 @@ export class Sidebar implements OnInit {
     });
   }
 
+  private loadPendingRequests(): void {
+    this.userService.loadPendingRequests().subscribe();
+  }
+
   ngOnInit(): void {
     if (this.isLobby()) {
       this.notificationService.init();
       this.loadFriends();
+      this.loadPendingRequests();
 
-      // Refresh every 30s so online/offline status stays current
+      // Refresh every 30s so online/offline status and pending requests stay current
       interval(30_000)
         .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe(() => this.loadFriends());
+        .subscribe(() => {
+          this.loadFriends();
+          this.loadPendingRequests();
+        });
     }
+  }
+
+  openAddFriendModal(): void {
+    this.showAddFriendModal.set(true);
+  }
+
+  closeAddFriendModal(): void {
+    this.showAddFriendModal.set(false);
+  }
+
+  acceptRequest(requesterId: number): void {
+    this.userService.acceptFriendRequest(requesterId).subscribe(() => {
+      this.loadFriends();
+      this.loadPendingRequests();
+    });
+  }
+
+  rejectRequest(requesterId: number): void {
+    this.userService.rejectFriendRequest(requesterId).subscribe(() => {
+      this.loadPendingRequests();
+    });
+  }
+
+  confirmRemoveFriend(friend: FriendEntry, event: Event): void {
+    event.stopPropagation();
+    this.friendToRemove.set(friend);
+    this.showRemoveConfirmModal.set(true);
+  }
+
+  closeRemoveConfirmModal(): void {
+    this.showRemoveConfirmModal.set(false);
+    this.friendToRemove.set(null);
+  }
+
+  executeRemoveFriend(): void {
+    const friend = this.friendToRemove();
+    if (!friend) return;
+    this.userService.removeFriend(friend.id).subscribe(() => {
+      this.loadFriends();
+      this.chatStateService.closeConversation(friend.id);
+      this.closeRemoveConfirmModal();
+    });
   }
 
   setActiveTab(tab: 'friends' | 'notifications'): void {
@@ -97,5 +159,15 @@ export class Sidebar implements OnInit {
   formatType(type: string): string {
     return type.replace(/_/g, ' ').toLowerCase()
       .replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  notificationLabel(n: NotificationPayload): string {
+    if (n.type === 'FRIEND_REQUEST' || n.type === 'FRIEND_ACCEPTED') {
+      const payload = n.payload as { username: string };
+      return n.type === 'FRIEND_REQUEST'
+        ? `${payload.username} sent you a friend request`
+        : `${payload.username} accepted your friend request`;
+    }
+    return this.formatType(n.type);
   }
 }
