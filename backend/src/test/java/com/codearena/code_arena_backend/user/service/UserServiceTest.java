@@ -55,6 +55,7 @@ class UserServiceTest {
     void loadUserByUsername_existingUser_returnsDetails() {
         // Arrange
         User user = new User();
+        user.setId(1L);
         user.setUsername("player1");
         user.setEmail("p1@arena.com");
         user.setPassword("$2a$hashed");
@@ -66,7 +67,7 @@ class UserServiceTest {
         UserDetails details = userService.loadUserByUsername("player1");
 
         // Assert
-        assertThat(details.getUsername()).isEqualTo("player1");
+        assertThat(details.getUsername()).isEqualTo("1");
         assertThat(details.getPassword()).isEqualTo("$2a$hashed");
         assertThat(details.getAuthorities())
                 .extracting("authority")
@@ -77,6 +78,7 @@ class UserServiceTest {
     @DisplayName("loadUserByUsername – maps admin role to ROLE_ADMIN authority")
     void loadUserByUsername_adminRole_mapsAuthority() {
         User admin = new User();
+        admin.setId(2L);
         admin.setUsername("admin");
         admin.setEmail("admin@arena.com");
         admin.setPassword("$2a$hashed");

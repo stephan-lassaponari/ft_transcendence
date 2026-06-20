@@ -98,7 +98,7 @@ public class DuelService {
             .duelId(duel.getId())
             .result(isDraw ? "DRAW" : (winnerId.equals(challenger.getId()) ? "WIN" : "LOSS"))
             .opponentId(opponent.getId())
-            .opponentName(opponent.getDisplayName())
+            .opponentName(opponent.getUsername())
             .eloChange(challengerDelta)
             .newElo(challenger.getElo())
             .build();
@@ -109,7 +109,7 @@ public class DuelService {
             .duelId(duel.getId())
             .result(isDraw ? "DRAW" : (winnerId.equals(opponent.getId()) ? "WIN" : "LOSS"))
             .opponentId(challenger.getId())
-            .opponentName(challenger.getDisplayName())
+            .opponentName(challenger.getUsername())
             .eloChange(opponentDelta)
             .newElo(opponent.getElo())
             .build();

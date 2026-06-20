@@ -88,7 +88,7 @@ public class WebSocketIntegrationTest {
         userA = userRepository.save(userA);
 
         UserDetails userDetails = org.springframework.security.core.userdetails.User.builder()
-            .username(userA.getUsername())
+            .username(userA.getId().toString())
             .password(userA.getPassword())
             .authorities(Collections.emptyList())
             .build();
@@ -102,7 +102,7 @@ public class WebSocketIntegrationTest {
         userB = userRepository.save(userB);
 
         UserDetails userDetailsB = org.springframework.security.core.userdetails.User.builder()
-            .username(userB.getUsername())
+            .username(userB.getId().toString())
             .password(userB.getPassword())
             .authorities(Collections.emptyList())
             .build();

@@ -72,7 +72,7 @@ export class ProfileSettings implements OnInit {
         },
         error: (err) => {
           console.error('Failed to load profile:', err);
-          this.initForms({ username: '', displayName: '', email: '' });
+          this.initForms({ username: '', email: '' });
         }
       });
     }
@@ -81,8 +81,7 @@ export class ProfileSettings implements OnInit {
   // Inicializa os reactive forms com dados do perfil atual.
   private initForms(user: any): void {
     this.personalForm = this.fb.group({
-      username: [{ value: user.username, disabled: true }],
-      displayName: [user.displayName || user.username, [Validators.required, Validators.minLength(3)]],
+      username: [user.username, [Validators.required, Validators.minLength(3)]],
       email: [user.email, [ Validators.required, Validators.email] ],
     });
 
@@ -154,9 +153,12 @@ export class ProfileSettings implements OnInit {
         this.avatarFile.set(null);
         this.avatarPreview.set(null);
         this.showToast('Avatar updated successfully', 'success');
+        this.savingAvatar.set(false);
       },
-      error: () => this.showToast('Failed to update avatar', 'error'),
-      complete: () => this.savingAvatar.set(false),
+      error: () => {
+        this.showToast('Failed to update avatar', 'error');
+        this.savingAvatar.set(false);
+      }
     });
   }
 
@@ -168,20 +170,23 @@ export class ProfileSettings implements OnInit {
 
   // ── Personal Info ──
 
-  // Salva dados pessoais (displayName e/ou email).
+  // Salva dados pessoais (username e/ou email).
   savePersonalInfo(): void {
     this.personalForm.markAllAsTouched();
     if (this.personalForm.invalid) return;
 
     this.savingPersonal.set(true);
-    const { displayName, email } = this.personalForm.value;
-    this.userService.updateProfile({ displayName, email }).subscribe({
-      next: () => this.showToast('Profile updated successfully', 'success'),
+    const { username, email } = this.personalForm.value;
+    this.userService.updateProfile({ username, email }).subscribe({
+      next: () => {
+        this.showToast('Profile updated successfully', 'success');
+        this.savingPersonal.set(false);
+      },
       error: (err) => {
         const errMsg = err.error?.error || 'Failed to update profile';
         this.showToast(errMsg, 'error');
-      },
-      complete: () => this.savingPersonal.set(false)
+        this.savingPersonal.set(false);
+      }
     });
   }
 
@@ -198,12 +203,13 @@ export class ProfileSettings implements OnInit {
       next: () => {
         this.passwordForm.reset();
         this.showToast('Password changed successfully', 'success');
+        this.savingPassword.set(false);
       },
       error: (err) => {
         const errMsg = err.error?.error || 'Failed to change password';
         this.showToast(errMsg, 'error');
-      },
-      complete: () => this.savingPassword.set(false)
+        this.savingPassword.set(false);
+      }
     });
   }
 

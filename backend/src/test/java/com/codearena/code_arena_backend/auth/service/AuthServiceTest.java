@@ -91,7 +91,7 @@ class AuthServiceTest {
         ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
         verify(userService).save(userCaptor.capture());
         User savedUser = userCaptor.getValue();
-        assertThat(savedUser.getDisplayName()).isEqualTo("player1");
+        assertThat(savedUser.getUsername()).isEqualTo("player1");
         assertThat(savedUser.getAvatar()).isNull();
         assertThat(savedUser.getRole()).isEqualTo(User.Role.USER);
     }

@@ -107,9 +107,9 @@ class UserProfileServiceTest {
                 new UpdateUserProfileRequest("New Name", null, "Coder from 42")
         );
 
-        assertThat(user.getDisplayName()).isEqualTo("New Name");
+        assertThat(user.getUsername()).isEqualTo("New Name");
         assertThat(user.getBio()).isEqualTo("Coder from 42");
-        assertThat(response.displayName()).isEqualTo("New Name");
+        assertThat(response.username()).isEqualTo("New Name");
         assertThat(response.bio()).isEqualTo("Coder from 42");
     }
 
@@ -392,7 +392,6 @@ class UserProfileServiceTest {
         user.setUsername(username);
         user.setEmail(username + "@arena.com");
         user.setPassword("hash");
-        user.setDisplayName(username);
         user.setWins(0);
         user.setLosses(0);
         user.setElo(0);

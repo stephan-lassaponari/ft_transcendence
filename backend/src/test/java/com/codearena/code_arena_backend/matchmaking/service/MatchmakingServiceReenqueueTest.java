@@ -71,14 +71,12 @@ class MatchmakingServiceReenqueueTest {
         player1 = new User();
         player1.setId(1L);
         player1.setUsername("player1");
-        player1.setDisplayName("Player 1");
         player1.setElo(1200);
         player1.setStatus(User.UserStatus.IN_QUEUE);
 
         player2 = new User();
         player2.setId(2L);
         player2.setUsername("player2");
-        player2.setDisplayName("Player 2");
         player2.setElo(1250);
         player2.setStatus(User.UserStatus.IN_QUEUE);
     }

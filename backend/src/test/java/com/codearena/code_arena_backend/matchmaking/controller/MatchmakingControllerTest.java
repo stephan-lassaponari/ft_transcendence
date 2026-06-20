@@ -67,7 +67,7 @@ class MatchmakingControllerTest {
 
         // Verify notification sent via user destination
         verify(messagingTemplate).convertAndSendToUser(
-                eq("player1"),
+                eq("1"),
                 eq("/queue/matchmaking"),
                 any()
         );

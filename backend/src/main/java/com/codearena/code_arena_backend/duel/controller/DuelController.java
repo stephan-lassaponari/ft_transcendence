@@ -75,7 +75,7 @@ public class DuelController {
                             : resolvedDuel.getChallengerId();
 
                     String opponentName = userRepository.findById(opponentId)
-                            .map(u -> u.getDisplayName() != null ? u.getDisplayName() : u.getUsername())
+                            .map(User::getUsername)
                             .orElse("Unknown");
 
                     Map<String, Object> body = Map.of(

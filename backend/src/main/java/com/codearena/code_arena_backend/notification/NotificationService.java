@@ -49,7 +49,7 @@ public class NotificationService {
                 .build();
 
             messagingTemplate.convertAndSendToUser(
-                user.getUsername(),
+                user.getId().toString(),
                 "/queue/notifications",
                 response
             );

@@ -96,16 +96,16 @@ public class MatchmakingService {
         //       the client receives the MATCHED event and navigates to /arena.
         //       Without this, the arena guard's getActiveDuel() call would see
         //       no duel yet (race condition).
-        String player1DisplayName = player1.getDisplayName() != null ? player1.getDisplayName() : player1.getUsername();
-        String player2DisplayName = player2.getDisplayName() != null ? player2.getDisplayName() : player2.getUsername();
+        String player1DisplayName = player1.getUsername();
+        String player2DisplayName = player2.getUsername();
 
         final MatchmakingEvent event1 = MatchmakingEvent.matched(
             duel.getId(), player2Id, player2DisplayName, challenge.getId());
         final MatchmakingEvent event2 = MatchmakingEvent.matched(
             duel.getId(), player1Id, player1DisplayName, challenge.getId());
 
-        final String p1Username = player1.getUsername();
-        final String p2Username = player2.getUsername();
+        final String p1Username = player1Id.toString();
+        final String p2Username = player2Id.toString();
         final Long duelId = duel.getId();
 
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
@@ -167,7 +167,7 @@ public class MatchmakingService {
                 u.setStatus(User.UserStatus.IN_QUEUE);
                 userRepository.save(u);
                 try {
-                    messagingTemplate.convertAndSendToUser(u.getUsername(), "/queue/matchmaking", MatchmakingEvent.queued());
+                    messagingTemplate.convertAndSendToUser(u.getId().toString(), "/queue/matchmaking", MatchmakingEvent.queued());
                 } catch (Exception ex) {
                     log.warn("Failed to notify player {} after re-enqueue", player1Id, ex);
                 }
@@ -176,7 +176,7 @@ public class MatchmakingService {
                 u.setStatus(User.UserStatus.IN_QUEUE);
                 userRepository.save(u);
                 try {
-                    messagingTemplate.convertAndSendToUser(u.getUsername(), "/queue/matchmaking", MatchmakingEvent.queued());
+                    messagingTemplate.convertAndSendToUser(u.getId().toString(), "/queue/matchmaking", MatchmakingEvent.queued());
                 } catch (Exception ex) {
                     log.warn("Failed to notify player {} after re-enqueue", player2Id, ex);
                 }
@@ -201,7 +201,7 @@ public class MatchmakingService {
             user.setStatus(User.UserStatus.ONLINE);
             userRepository.save(user);
             try {
-                messagingTemplate.convertAndSendToUser(user.getUsername(), "/queue/matchmaking", MatchmakingEvent.cancelled());
+                messagingTemplate.convertAndSendToUser(user.getId().toString(), "/queue/matchmaking", MatchmakingEvent.cancelled());
             } catch (Exception e) {
                 log.warn("Failed to send cancelled event to user {}", userId, e);
             }
@@ -221,7 +221,7 @@ public class MatchmakingService {
             user.setStatus(User.UserStatus.ONLINE);
             userRepository.save(user);
             try {
-                messagingTemplate.convertAndSendToUser(user.getUsername(), "/queue/matchmaking", MatchmakingEvent.timeout());
+                messagingTemplate.convertAndSendToUser(user.getId().toString(), "/queue/matchmaking", MatchmakingEvent.timeout());
             } catch (Exception e) {
                 log.warn("Failed to send timeout event to user {}", userId, e);
             }

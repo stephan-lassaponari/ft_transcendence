@@ -43,7 +43,7 @@ export interface FriendEntry {
 }
 
 export interface UpdateProfilePayload {
-  displayName: string;
+  username: string;
   email: string;
 }
 

@@ -80,18 +80,29 @@ public class UserProfileService {
 
     @Transactional
     public UserProfileResponse updateMyProfile(String username, UpdateUserProfileRequest request) {
-        if (request.getDisplayName() == null && request.getBio() == null && request.getEmail() == null) {
-            throw new IllegalArgumentException("At least one field must be provided: displayName, bio or email");
+        if (request.getUsername() == null && request.getDisplayName() == null && request.getBio() == null && request.getEmail() == null) {
+            throw new IllegalArgumentException("At least one field must be provided: username, displayName, bio or email");
         }
 
         User user = requireUserByUsername(username);
 
-        if (request.getDisplayName() != null) {
-            String displayName = request.getDisplayName().trim();
-            if (displayName.isEmpty()) {
-                throw new IllegalArgumentException("displayName cannot be blank");
+        String targetUsername = null;
+        if (request.getUsername() != null) {
+            targetUsername = request.getUsername().trim();
+        } else if (request.getDisplayName() != null) {
+            targetUsername = request.getDisplayName().trim();
+        }
+
+        if (targetUsername != null) {
+            if (targetUsername.isEmpty()) {
+                throw new IllegalArgumentException("Username cannot be blank");
             }
-            user.setDisplayName(displayName);
+            if (!targetUsername.equals(user.getUsername())) {
+                if (userRepository.existsByUsername(targetUsername)) {
+                    throw new IllegalArgumentException("Username already exists");
+                }
+                user.setUsername(targetUsername);
+            }
         }
 
         if (request.getBio() != null) {

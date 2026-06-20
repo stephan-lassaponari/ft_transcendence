@@ -11,9 +11,7 @@ public record FriendSummaryResponse(
         boolean online
 ) {
     public static FriendSummaryResponse from(User user) {
-        String resolvedDisplayName = user.getDisplayName() == null || user.getDisplayName().isBlank()
-                ? user.getUsername()
-                : user.getDisplayName();
+        String resolvedDisplayName = user.getUsername();
         boolean isOnline = user.getStatus() != User.UserStatus.OFFLINE;
 
         return new FriendSummaryResponse(
