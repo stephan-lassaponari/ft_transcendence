@@ -1,4 +1,4 @@
-import { Component, inject, signal, HostListener, ElementRef } from '@angular/core';
+import { Component, inject, signal, computed, HostListener, ElementRef } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { RouteStateService } from '../../../core/services/route-state.service';
 import { UserService } from '../../../core/services/user.service';
@@ -18,6 +18,13 @@ export class Navbar {
 
   username = this.userService.username;
   avatarLetter = this.userService.avatarLetter;
+  avatarUrl = computed(() => this.userService.currentUser()?.avatarUrl);
+  
+  failedUrls = signal<Set<string>>(new Set());
+  isAvatarFailed = computed(() => {
+    const url = this.avatarUrl();
+    return url ? this.failedUrls().has(url) : false;
+  });
 
   // Delegado ao serviço compartilhado para evitar duplicação de lógica de rota.
   isLobby = this.routeState.isLobby;
@@ -35,6 +42,17 @@ export class Navbar {
   onLogout(): void {
     this.dropdownOpen.set(false);
     this.authService.logout();
+  }
+
+  onAvatarError(event: Event): void {
+    const url = this.avatarUrl();
+    if (url) {
+      this.failedUrls.update(set => {
+        const next = new Set(set);
+        next.add(url);
+        return next;
+      });
+    }
   }
 
   @HostListener('document:click', ['$event'])

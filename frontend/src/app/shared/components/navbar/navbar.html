@@ -15,7 +15,11 @@
         </div>
         <div class="avatar-wrapper" (click)="toggleDropdown()">
           <div class="user-avatar" [class.avatar--open]="dropdownOpen()">
-            <span class="avatar-letter">{{ avatarLetter() }}</span>
+            @if (avatarUrl() && !isAvatarFailed()) {
+              <img [src]="avatarUrl()" alt="User Avatar" class="avatar-img" (error)="onAvatarError($event)" />
+            } @else {
+              <span class="avatar-letter">{{ avatarLetter() }}</span>
+            }
           </div>
           @if (dropdownOpen()) {
             <div class="user-dropdown">
