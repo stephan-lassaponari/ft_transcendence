@@ -1,15 +1,26 @@
 <div class="arena-shell" #arenaShell>
 
-  <!-- ── Opponent-finished notification ────────────────────────── -->
-  @if (showOpponentNotif()) {
-    <div class="opponent-notif" role="alert">
-      <span class="opponent-notif-icon">&#9888;</span>
-      <div class="opponent-notif-body">
-        <span class="opponent-notif-title">Opponent finished!</span>
-        <span class="opponent-notif-sub">You have 1 minute left to submit.</span>
+  <!-- ── Duel notification (different message for submitter vs opponent) ── -->
+  @if (showDuelNotif()) {
+    @if (isSubmitterNotif()) {
+      <div class="duel-notif duel-notif--info" role="alert">
+        <span class="duel-notif-icon">&#10003;</span>
+        <div class="duel-notif-body">
+          <span class="duel-notif-title">Code submitted!</span>
+          <span class="duel-notif-sub">Your opponent has 1 minute left.</span>
+        </div>
+        <button class="duel-notif-close" type="button" (click)="dismissDuelNotif()" aria-label="Dismiss">&#10005;</button>
       </div>
-      <button class="opponent-notif-close" type="button" (click)="dismissOpponentNotif()" aria-label="Dismiss">&#10005;</button>
-    </div>
+    } @else {
+      <div class="duel-notif duel-notif--urgent" role="alert">
+        <span class="duel-notif-icon">&#9888;</span>
+        <div class="duel-notif-body">
+          <span class="duel-notif-title">Opponent finished!</span>
+          <span class="duel-notif-sub">You have 1 minute left to submit.</span>
+        </div>
+        <button class="duel-notif-close" type="button" (click)="dismissDuelNotif()" aria-label="Dismiss">&#10005;</button>
+      </div>
+    }
   }
 
   <!-- ── LEFT PANEL: Problem ─────────────────────────────────── -->

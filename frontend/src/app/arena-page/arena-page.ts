@@ -276,7 +276,15 @@ int main() {
           this.redirectTimeoutId = setTimeout(() => this.router.navigate(['/lobby']), 10000);
         break;
       case 'DUEL_OPPONENT_FINISHED':
-        if (event.username !== this.userService.username()) {
+        const eventUsername = event.username ? String(event.username) : '';
+        const currentUsername = this.userService.username();
+        const currentUserId = String(this.myId());
+
+        if (eventUsername === currentUsername || eventUsername === currentUserId) {
+          // I am the one who submitted — show informational notification
+          this.submitterNotification();
+        } else {
+          // My opponent submitted — show urgent notification
           this.opponentFinished();
         }
         break;
@@ -353,7 +361,7 @@ int main() {
   ngOnDestroy(): void {
     this.stopResize();
     this.stopFooterResize();
-    if (this.notifTimeoutId !== null) clearTimeout(this.notifTimeoutId);
+    if (this.notifTimeoutId !== null) { clearTimeout(this.notifTimeoutId); this.notifTimeoutId = null; }
     if (this.redirectTimeoutId !== null) clearTimeout(this.redirectTimeoutId);
     this.subs.unsubscribe();
     this.wsService.disconnect();
@@ -469,8 +477,14 @@ int main() {
     // Trying to submit code now would result in a 409 Conflict error, so we do nothing.
   }
 
-  /** Whether the opponent-finished notification banner is visible. */
-  showOpponentNotif = signal(false);
+  /** Whether a duel notification banner is visible. */
+  showDuelNotif = signal(false);
+
+  /**
+   * Indicates if the current notification is for the submitter (true) or
+   * for the opponent who still needs to submit (false).
+   */
+  isSubmitterNotif = signal(false);
 
   private notifTimeoutId: ReturnType<typeof setTimeout> | null = null;
   private redirectTimeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -481,13 +495,28 @@ int main() {
    */
   opponentFinished(): void {
     this.arenaTimer?.opponentFinished();
-    this.showOpponentNotif.set(true);
-    if (this.notifTimeoutId !== null) clearTimeout(this.notifTimeoutId);
-    this.notifTimeoutId = setTimeout(() => this.showOpponentNotif.set(false), 5000);
+    const verdict = this.submissionResult()?.verdict;
+    if (verdict !== 'submitted' && verdict !== 'evaluating') {
+      this.isSubmitterNotif.set(false);
+      this.showDuelNotif.set(true);
+      if (this.notifTimeoutId !== null) clearTimeout(this.notifTimeoutId);
+      this.notifTimeoutId = setTimeout(() => this.showDuelNotif.set(false), 5000);
+    }
   }
 
-  dismissOpponentNotif(): void {
-    this.showOpponentNotif.set(false);
+  /**
+   * Call this when the current user is the first to submit.
+   * Shows a notification telling them the opponent now has 1 minute left.
+   */
+  submitterNotification(): void {
+    this.isSubmitterNotif.set(true);
+    this.showDuelNotif.set(true);
+    if (this.notifTimeoutId !== null) clearTimeout(this.notifTimeoutId);
+    this.notifTimeoutId = setTimeout(() => this.showDuelNotif.set(false), 5000);
+  }
+
+  dismissDuelNotif(): void {
+    this.showDuelNotif.set(false);
     if (this.notifTimeoutId !== null) {
       clearTimeout(this.notifTimeoutId);
       this.notifTimeoutId = null;

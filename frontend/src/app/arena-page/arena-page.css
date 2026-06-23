@@ -1,5 +1,5 @@
-/* ── Opponent-finished notification ──────────────────────────── */
-.opponent-notif {
+/* ── Duel notification banner ────────────────────────────────── */
+.duel-notif {
   position: absolute;
   top: 12px;
   right: 24px;
@@ -7,14 +7,25 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  background: rgba(20, 6, 6, 0.97);
-  border: 1px solid var(--color-defeat);
   border-radius: 8px;
   padding: 12px 16px;
   min-width: 320px;
   max-width: 480px;
-  box-shadow: 0 4px 24px rgba(239, 68, 68, 0.25);
   animation: notif-in 0.2s ease;
+}
+
+/* Urgent variant (opponent's POV — red) */
+.duel-notif--urgent {
+  background: rgba(20, 6, 6, 0.97);
+  border: 1px solid var(--color-defeat);
+  box-shadow: 0 4px 24px rgba(239, 68, 68, 0.25);
+}
+
+/* Informational variant (submitter's POV — green) */
+.duel-notif--info {
+  background: rgba(6, 20, 10, 0.97);
+  border: 1px solid var(--color-victory, #22c55e);
+  box-shadow: 0 4px 24px rgba(34, 197, 94, 0.25);
 }
 
 @keyframes notif-in {
@@ -22,35 +33,37 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-.opponent-notif-icon {
+.duel-notif-icon {
   font-size: 20px;
-  color: var(--color-defeat);
   flex-shrink: 0;
   line-height: 1;
 }
+.duel-notif--urgent .duel-notif-icon { color: var(--color-defeat); }
+.duel-notif--info   .duel-notif-icon { color: var(--color-victory, #22c55e); }
 
-.opponent-notif-body {
+.duel-notif-body {
   display: flex;
   flex-direction: column;
   gap: 2px;
   flex: 1;
 }
 
-.opponent-notif-title {
+.duel-notif-title {
   font-family: var(--font-system);
   font-size: 13px;
   font-weight: 700;
-  color: var(--color-defeat);
   letter-spacing: 0.03em;
 }
+.duel-notif--urgent .duel-notif-title { color: var(--color-defeat); }
+.duel-notif--info   .duel-notif-title { color: var(--color-victory, #22c55e); }
 
-.opponent-notif-sub {
+.duel-notif-sub {
   font-family: var(--font-system);
   font-size: 11px;
   color: var(--text-muted);
 }
 
-.opponent-notif-close {
+.duel-notif-close {
   background: transparent;
   border: none;
   color: var(--text-dim);
@@ -62,7 +75,7 @@
   transition: color 0.15s;
 }
 
-.opponent-notif-close:hover {
+.duel-notif-close:hover {
   color: var(--text);
 }
 
