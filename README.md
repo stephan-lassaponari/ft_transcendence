@@ -408,14 +408,14 @@ The database schema is managed through **25 Flyway migration files** located in 
 | **Monaco Code Editor**      | In-browser code editor with syntax highlighting, integrated into the Arena page with timer and opponent status.   | strodrig, hepereir    |
 | **Real-Time Communication** | STOMP/SockJS WebSocket infrastructure for live duel updates, matchmaking events, and chat.                       | tborges-, strodrig    |
 | **Leaderboard**             | Global ranking display with league filters. Shows Elo, win rate, and league badges.                              | strodrig, hepereir    |
-| **Chat System**             | Real-time direct messaging between users via WebSocket.                                                          | tborges-, hepereir    |
-| **Notification System**     | Real-time notifications for duel results, friend requests, and system events. Delivered via WebSocket with JSONB payloads. | tborges-, strodrig |
+| **Chat System**             | Real-time direct messaging between users via WebSocket.                                                          | tjorge-l, hepereir    |
+| **Notification System**     | Real-time notifications for duel results, friend requests, and system events. Delivered via WebSocket with JSONB payloads. | tjorge-l, strodrig |
 | **Gamification**            | League system (Bronze → Legend), Elo progression, and win streak tracking.                                       | tjorge-l, hepereir    |
-| **OAuth 2.0 Login**         | Sign in with GitHub or 42 Intra as an alternative to email/password.                                             | tborges-, tjorge-l    |
-| **Challenge Bank**          | Curated set of C programming challenges across 4 difficulty tiers (Easy, Medium, Hard, Insane) with automated test cases. | tjorge-l          |
+| **OAuth 2.0 Login**         | Sign in with GitHub or 42 Intra as an alternative to email/password.                                             | tborges-    |
+| **Challenge Bank**          | Curated set of C programming challenges across 4 difficulty tiers (Easy, Medium, Hard, Insane) with automated test cases. | tborges-          |
 | **Duel Scoring**            | Composite scoring formula: 40% submission time + 30% performance + 20% correctness bonus + 10% code quality.    | tborges-              |
 | **Landing Page & About**    | Public-facing pages with project information and navigation.                                                     | strodrig, hepereir    |
-| **Nginx Reverse Proxy**     | SSL termination, HTTP→HTTPS redirect, WebSocket proxying, and SPA routing.                                      | tborges-              |
+| **Nginx Reverse Proxy**     | SSL termination, HTTP→HTTPS redirect, WebSocket proxying, and SPA routing.                                      | tjorge-l, stodrig              |
 | **Docker Deployment**       | Single-command deployment via `docker compose up` with 9 orchestrated services.                                  | tborges-, tjorge-l    |
 
 ---
