@@ -58,7 +58,6 @@ class DuelControllerTest {
         User user = new User();
         user.setId(id);
         user.setUsername(username);
-        user.setDisplayName(displayName);
         return user;
     }
 
@@ -84,7 +83,7 @@ class DuelControllerTest {
     @DisplayName("GET /api/duels/active includes EVALUATING in the active duel selection")
     void getActiveDuel_selectsEvaluatingDuel() {
         User me = user(1L, "player1", "Player One");
-        User opponent = user(2L, "player2", "Rival");
+        User opponent = user(2L, "Rival", "Rival");
         Duel activeDuel = duel(99L, 1L, 2L, 7L, Duel.DuelStatus.EVALUATING);
         UserDetails userDetails = org.mockito.Mockito.mock(UserDetails.class);
 

@@ -46,8 +46,6 @@ public class User {
     @Column(name = "avatar_url", length = 2048)
     private String avatar;
 
-    @Column(name = "display_name", length = 100)
-    private String displayName;
 
     @Column(columnDefinition = "TEXT")
     private String bio;

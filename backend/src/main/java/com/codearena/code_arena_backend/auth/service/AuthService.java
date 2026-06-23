@@ -71,7 +71,6 @@ public class AuthService {
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
         user.setRole(User.Role.USER);
-        user.setDisplayName(request.getUsername());
         // Never store plain-text passwords: BCrypt hashes are one-way.
         user.setPassword(passwordEncoder.encode(request.getPassword()));
 

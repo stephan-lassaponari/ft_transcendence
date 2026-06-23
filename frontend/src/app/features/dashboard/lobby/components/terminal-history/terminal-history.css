@@ -143,6 +143,8 @@
 	align-items: center;
 	gap: 8px;
 	padding: 0 10px;
+	pointer-events: none;
+	user-select: none;
 }
 
 .prompt-symbol {

@@ -42,9 +42,7 @@ public record UserProfileResponse(
      * Does NOT populate ranking context fields — use {@link #withRankingContext} for that.
      */
     public static UserProfileResponse from(User user, String leagueName) {
-        String resolvedDisplayName = user.getDisplayName() == null || user.getDisplayName().isBlank()
-                ? user.getUsername()
-                : user.getDisplayName();
+        String resolvedDisplayName = user.getUsername();
 
         return new UserProfileResponse(
                 user.getId(),

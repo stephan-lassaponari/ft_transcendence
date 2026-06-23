@@ -4,7 +4,7 @@
 		<header class="workspace-topbar">
 			<div class="workspace-tabs" aria-label="Workspace tabs">
 				@for (tab of tabs; track tab.id) {
-				<button class="tab-item" [class.active]="tab.active" type="button">{{ tab.label }}</button>
+				<span class="tab-item" [class.active]="tab.active">{{ tab.label }}</span>
 				}
 			</div>
 		</header>

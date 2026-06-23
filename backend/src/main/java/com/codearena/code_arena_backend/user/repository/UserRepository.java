@@ -14,7 +14,20 @@ import java.util.Optional;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
-    Optional<User> findByUsername(String username);
+    @Query("SELECT u FROM User u WHERE u.username = :username")
+    Optional<User> findByUsernameOnly(@org.springframework.data.repository.query.Param("username") String username);
+
+    default Optional<User> findByUsername(String usernameOrId) {
+        if (usernameOrId == null) {
+            return Optional.empty();
+        }
+        try {
+            Long id = Long.parseLong(usernameOrId);
+            return findById(id);
+        } catch (NumberFormatException e) {
+            return findByUsernameOnly(usernameOrId);
+        }
+    }
     Optional<User> findByEmail(String email);
     boolean existsByUsername(String username);
     boolean existsByEmail(String email);

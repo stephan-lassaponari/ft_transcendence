@@ -186,7 +186,7 @@ public class UserService implements UserDetailsService {
     private UserDetails toUserDetails(User user) {
         String authority = "ROLE_" + user.getRole().name();
         return org.springframework.security.core.userdetails.User.builder()
-                .username(user.getUsername())
+                .username(user.getId().toString())
                 .password(user.getPassword()) // already BCrypt-hashed
             .authorities(List.<GrantedAuthority>of(new SimpleGrantedAuthority(authority)))
                 .build();

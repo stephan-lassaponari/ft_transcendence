@@ -250,7 +250,6 @@ public class OAuth2Service {
         }
 
         user.setUsername(finalUsername);
-        user.setDisplayName(finalUsername);
 
         // Handle email (if provider didn't return one, generate a placeholder)
         String email = userInfo.email();

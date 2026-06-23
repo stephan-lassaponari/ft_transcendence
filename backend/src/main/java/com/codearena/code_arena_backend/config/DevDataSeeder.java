@@ -32,7 +32,6 @@ public class DevDataSeeder implements CommandLineRunner {
             User devUser = new User();
             devUser.setUsername(username);
             devUser.setEmail("dev@codearena.dev");
-            devUser.setDisplayName("Dev User");
             devUser.setRole(User.Role.USER);
             // Hash the password so it works with the standard login endpoint
             devUser.setPassword(passwordEncoder.encode("password123"));

@@ -59,7 +59,7 @@ public class MatchmakingController {
 
             MatchmakingEvent event = MatchmakingEvent.queued();
             try {
-                messagingTemplate.convertAndSendToUser(user.getUsername(), "/queue/matchmaking", event);
+                messagingTemplate.convertAndSendToUser(user.getId().toString(), "/queue/matchmaking", event);
             } catch (Exception e) {
                 // Fall back to logging if notification fails (user will still be enqueued)
                 log.warn("Failed to send matchmaking notification to user {}", user.getUsername(), e);
