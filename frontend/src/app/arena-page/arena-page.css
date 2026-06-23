@@ -904,3 +904,92 @@
   border-color: rgba(239, 68, 68, 0.8);
   box-shadow: 0 0 12px rgba(239, 68, 68, 0.3);
 }
+
+/* ── Mobile responsive ───────────────────────────────────────── */
+@media (max-width: 768px) {
+  .arena-shell {
+    --panel-width: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .problem-panel {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    max-height: 30vh;
+    min-height: 80px;
+    flex-shrink: 0;
+    overflow-y: auto;
+  }
+
+  .resize-handle {
+    display: none;
+  }
+
+  .editor-panel {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .editor-area {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .editor-topbar {
+    padding: 0 8px;
+    height: 38px;
+  }
+
+  .editor-topbar-left {
+    gap: 6px;
+  }
+
+  .theme-btn {
+    font-size: 10px;
+    padding: 3px 8px;
+  }
+
+  .duel-notif {
+    right: 8px;
+    left: 8px;
+    min-width: auto;
+    max-width: none;
+    top: 8px;
+  }
+
+  .footer-bar {
+    padding: 8px 10px;
+    gap: 8px;
+    min-height: 48px;
+    flex-wrap: wrap;
+  }
+
+  .footer-left {
+    min-width: 0;
+  }
+
+  .footer-body--split {
+    flex-direction: column;
+  }
+
+  .result-cases {
+    width: 100%;
+    flex-direction: row;
+    overflow-x: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding: 8px;
+  }
+
+  .run-btn,
+  .submit-btn,
+  .leave-btn {
+    font-size: 11px;
+    padding: 6px 12px;
+  }
+}

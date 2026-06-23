@@ -166,3 +166,17 @@
 .prompt-input::placeholder {
 	color: rgba(255, 255, 255, 0.45);
 }
+
+@media (max-width: 640px) {
+	:host {
+		min-height: 200px;
+	}
+
+	.pane-content {
+		padding: 10px 8px;
+	}
+
+	.history-table {
+		font-size: 0.7rem;
+	}
+}

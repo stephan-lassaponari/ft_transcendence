@@ -47,6 +47,7 @@ export class Sidebar implements OnInit {
   showAddFriendModal = signal(false);
   showRemoveConfirmModal = signal(false);
   friendToRemove = signal<FriendEntry | null>(null);
+  mobilePanelOpen = signal(false);
 
   // Delegado ao serviço compartilhado para evitar duplicação de lógica de rota.
   isLobby = this.routeState.isLobby;
@@ -86,6 +87,10 @@ export class Sidebar implements OnInit {
 
   closeAddFriendModal(): void {
     this.showAddFriendModal.set(false);
+  }
+
+  toggleMobilePanel(): void {
+    this.mobilePanelOpen.update(v => !v);
   }
 
   acceptRequest(requesterId: number): void {

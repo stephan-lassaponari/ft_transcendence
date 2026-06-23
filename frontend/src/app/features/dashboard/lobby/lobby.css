@@ -128,5 +128,29 @@
 @media (max-width: 640px) {
 	.lobby-shell {
 		padding-right: 0;
+		height: auto;
+		min-height: calc(100vh - 56px);
+		overflow: visible;
+	}
+
+	.workspace-frame {
+		overflow: visible;
+	}
+
+	.workspace-main {
+		grid-template-columns: 1fr;
+		overflow: visible;
+		padding: 10px;
+		gap: 12px;
+	}
+
+	.stats-column {
+		max-width: none;
+		order: 0;
+	}
+
+	.editor-terminal-split {
+		order: 1;
+		overflow: visible;
 	}
 }

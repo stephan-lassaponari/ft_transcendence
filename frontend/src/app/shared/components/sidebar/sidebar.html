@@ -1,4 +1,101 @@
 @if (isLobby()) {
+<!-- Mobile friends toggle button -->
+<button class="mobile-friends-btn" (click)="toggleMobilePanel()" title="Friends" aria-label="Open friends panel">
+  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="22" height="22">
+    <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" fill="currentColor"/>
+  </svg>
+  @if (totalUnread() > 0) {
+    <span class="mobile-friends-badge">{{ totalUnread() }}</span>
+  }
+</button>
+
+<!-- Mobile friends overlay -->
+<div class="mobile-friends-overlay" [class.open]="mobilePanelOpen()">
+  <div class="mobile-friends-header">
+    <span class="mobile-friends-title">Friends</span>
+    <button class="mobile-friends-close" (click)="toggleMobilePanel()" aria-label="Close friends panel">&times;</button>
+  </div>
+  <div class="mobile-friends-body">
+    <div class="sidebar-tabs">
+      <button class="tab-btn" [class.active]="activeTab() === 'friends'" (click)="setActiveTab('friends')">
+        Friends
+        @if (pendingRequests().length > 0) {
+          <span class="unread-badge notification-badge">{{ pendingRequests().length }}</span>
+        }
+      </button>
+      <button class="tab-btn" [class.active]="activeTab() === 'notifications'" (click)="setActiveTab('notifications')">
+        Notifications
+      </button>
+      <button class="add-friend-btn" title="Add friend" (click)="openAddFriendModal()">+</button>
+    </div>
+
+    <app-add-friend-modal [open]="showAddFriendModal()" (closed)="closeAddFriendModal()" />
+
+    <div class="sidebar-content">
+      @if (activeTab() === 'friends') {
+      @if (pendingRequests().length > 0) {
+      <div class="pending-requests">
+        @for (req of pendingRequests(); track req.requesterId) {
+          <div class="pending-item">
+            <span class="pending-username">{{ req.username }}</span>
+            <div class="pending-actions">
+              <button class="pending-accept-btn" (click)="acceptRequest(req.requesterId)">Accept</button>
+              <button class="pending-reject-btn" (click)="rejectRequest(req.requesterId)">Reject</button>
+            </div>
+          </div>
+        }
+      </div>
+      }
+      <div class="friends-list">
+        @for (friend of friends(); track friend.id) {
+        <div class="friend-item" (click)="openChat(friend)">
+          <div class="friend-avatar">
+            <img [src]="friend.avatarUrl || ''" [alt]="friend.username" class="avatar-img"
+              (error)="hideBrokenAvatar($event)" />
+            <span class="avatar-fallback" hidden>{{ getAvatarLetter(friend.username) }}</span>
+            <span class="status-dot" [class]="statusClass(friend.status)"></span>
+          </div>
+          <div class="friend-info">
+            <span class="friend-name">{{ friend.username }}</span>
+            <span class="friend-rank">{{ friend.league }}</span>
+          </div>
+          @if (getUnread(friend.id) > 0) {
+            <span class="unread-badge">{{ getUnread(friend.id) }}</span>
+          }
+          <button class="remove-friend-btn" title="Remove friend" (click)="confirmRemoveFriend(friend, $event)">&times;</button>
+        </div>
+        }
+        @empty {
+        <div class="empty-state">
+          <span>No friends yet. Send an invite!</span>
+        </div>
+        }
+      </div>
+      }
+
+      @if (activeTab() === 'notifications') {
+      <div class="notifications-list">
+        @if (notificationService.notifications().length === 0) {
+          <div class="empty-state">
+            <svg class="empty-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M12 22C13.1 22 14 21.1 14 20H10C10 21.1 10.9 22 12 22ZM18 16V11C18 7.93 16.37 5.36 13.5 4.68V4C13.5 3.17 12.83 2.5 12 2.5C11.17 2.5 10.5 3.17 10.5 4V4.68C7.64 5.36 6 7.92 6 11V16L4 18V19H20V18L18 16ZM16 17H8V11C8 8.52 9.51 6.5 12 6.5C14.49 6.5 16 8.52 16 11V17Z"
+                fill="currentColor" />
+            </svg>
+          </div>
+        }
+        @for (n of notificationService.notifications(); track n.id) {
+          <div class="notification-item" [class.unread]="!n.read">
+            <span class="notification-type">{{ notificationLabel(n) }}</span>
+            <span class="notification-time">{{ n.createdAt | date:'HH:mm' }}</span>
+          </div>
+        }
+      </div>
+      }
+    </div>
+  </div>
+</div>
+
 <aside class="sidebar">
   <!-- Collapsed view (icons only) -->
   <div class="sidebar-collapsed">
