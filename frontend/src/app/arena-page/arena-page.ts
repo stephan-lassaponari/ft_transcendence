@@ -122,7 +122,7 @@ export class ArenaPage implements OnInit, OnDestroy {
         this.opponentName.set(activeDuel.opponentName);
 
         // console.log('Arena loaded — duelId:', activeDuel.duelId,
-          'challengeId:', activeDuel.challengeId, 'opponent:', activeDuel.opponentName);
+          // 'challengeId:', activeDuel.challengeId, 'opponent:', activeDuel.opponentName);
 
         // Carregar o challenge a partir do challengeId do duel (backend)
         this.challengeService.getChallenge(activeDuel.challengeId).subscribe({
