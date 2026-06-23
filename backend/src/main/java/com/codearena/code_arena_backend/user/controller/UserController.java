@@ -26,7 +26,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -39,8 +38,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
 
 /**
  * REST controller for authenticated user operations.
@@ -215,23 +212,4 @@ public class UserController {
                 .body(avatar.resource());
     }
 
-    // ------------------------------------------------------------------ //
-    //  Exception handlers                                                 //
-    // ------------------------------------------------------------------ //
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Map<String, String>> handleBadRequest(IllegalArgumentException ex) {
-        return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
-    }
-
-    @ExceptionHandler(NoSuchElementException.class)
-    public ResponseEntity<Map<String, String>> handleNotFound(NoSuchElementException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", ex.getMessage()));
-    }
-
-    @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<Map<String, String>> handleServerError(IllegalStateException ex) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("error", ex.getMessage()));
-    }
 }

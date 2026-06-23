@@ -15,11 +15,9 @@ import com.codearena.code_arena_backend.user.entity.User;
 import com.codearena.code_arena_backend.user.repository.UserRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -103,8 +101,7 @@ public class DuelController {
         // Security check: only participants can view their own duel.
         // Prevents any authenticated user from querying arbitrary duel IDs.
         if (!duel.getChallengerId().equals(user.getId()) && !duel.getOpponentId().equals(user.getId())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("error", "You are not a participant of this duel"));
+            return ResponseEntity.ok(Map.of("httpStatus", 403, "error", "You are not a participant of this duel"));
         }
 
         Duel resolvedDuel = duel;
@@ -172,14 +169,12 @@ public class DuelController {
 
         // Security: only participants can run code
         if (!duel.getChallengerId().equals(user.getId()) && !duel.getOpponentId().equals(user.getId())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("error", "You are not a participant of this duel"));
+            return ResponseEntity.ok(Map.of("httpStatus", 403, "error", "You are not a participant of this duel"));
         }
 
         // State validation: only allow run during IN_PROGRESS
         if (duel.getStatus() != Duel.DuelStatus.IN_PROGRESS) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(Map.of("error", "Run is only allowed while the duel is IN_PROGRESS"));
+            return ResponseEntity.ok(Map.of("httpStatus", 409, "error", "Run is only allowed while the duel is IN_PROGRESS"));
         }
 
         RunCodeResponse response = duelRunService.runCode(duel, request);
@@ -196,34 +191,11 @@ public class DuelController {
         String language = payload.getOrDefault("language", "C");
 
         if (code == null || code.isBlank()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Code cannot be empty"));
+            return ResponseEntity.ok(Map.of("httpStatus", 400, "error", "Code cannot be empty"));
         }
 
         submissionService.submitCode(duelId, userDetails.getUsername(), code, language);
         return ResponseEntity.ok(Map.of("message", "Submission received"));
     }
 
-    // ------------------------------------------------------------------ //
-    //  Exception handlers                                                  //
-    // ------------------------------------------------------------------ //
-
-    /**
-     * User is not a participant of the requested duel, or a resource was not found.
-     * Maps to 403 Forbidden so the caller cannot distinguish "not found" from "not yours".
-     */
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Map<String, String>> handleNotParticipant(IllegalArgumentException ex) {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(Map.of("error", ex.getMessage()));
-    }
-
-    /**
-     * Operation not allowed in the current duel state (e.g., already submitted, not IN_PROGRESS).
-     * Maps to 409 Conflict.
-     */
-    @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<Map<String, String>> handleConflict(IllegalStateException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(Map.of("error", ex.getMessage()));
-    }
 }

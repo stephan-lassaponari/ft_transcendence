@@ -1,5 +1,6 @@
 package com.codearena.code_arena_backend.matchmaking.controller;
 
+import com.codearena.code_arena_backend.matchmaking.dto.MatchmakingEvent;
 import com.codearena.code_arena_backend.matchmaking.service.MatchmakingQueueService;
 import com.codearena.code_arena_backend.matchmaking.service.MatchmakingService;
 import com.codearena.code_arena_backend.user.entity.User;
@@ -61,7 +62,7 @@ class MatchmakingControllerTest {
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().type()).isEqualTo("QUEUED");
+        assertThat(((MatchmakingEvent) response.getBody()).type()).isEqualTo("QUEUED");
         verify(userRepository).save(user);
         assertThat(user.getStatus()).isEqualTo(User.UserStatus.IN_QUEUE);
 
@@ -84,7 +85,7 @@ class MatchmakingControllerTest {
         var response = controller.enqueue(auth);
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
-        assertThat(response.getBody().type()).isEqualTo("QUEUED");
+        assertThat(((MatchmakingEvent) response.getBody()).type()).isEqualTo("QUEUED");
         verify(userRepository, never()).save(any());
     }
 
@@ -98,9 +99,11 @@ class MatchmakingControllerTest {
         var auth = new TestingAuthenticationToken("player1", null);
         var response = controller.enqueue(auth);
 
-        assertThat(response.getStatusCode().value()).isEqualTo(409);
-        assertThat(response.getBody().type()).isEqualTo("ERROR");
-        assertThat(response.getBody().message()).contains("Cannot queue while in a duel");
+        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+        @SuppressWarnings("unchecked")
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        assertThat(body.get("httpStatus")).isEqualTo(409);
+        assertThat(body.get("error").toString()).contains("Cannot queue while in a duel");
     }
 
     @Test
@@ -110,23 +113,26 @@ class MatchmakingControllerTest {
         when(userRepository.findByUsername("player1")).thenReturn(Optional.of(user));
 
         var auth = new TestingAuthenticationToken("player1", null);
-        ResponseEntity<Void> response = controller.cancelQueue(auth);
+        ResponseEntity<?> response = controller.cancelQueue(auth);
 
         assertThat(response.getStatusCode().value()).isEqualTo(204);
         verify(matchmakingService).cancelQueue(1L);
     }
 
     @Test
-    @DisplayName("DELETE /queue returns 404 when not queued")
+    @DisplayName("DELETE /queue returns 404 envelope when not queued")
     void cancelQueue_returns404() {
         User user = testUser();
         when(userRepository.findByUsername("player1")).thenReturn(Optional.of(user));
         doThrow(new IllegalStateException("Not in queue")).when(matchmakingService).cancelQueue(1L);
 
         var auth = new TestingAuthenticationToken("player1", null);
-        ResponseEntity<Void> response = controller.cancelQueue(auth);
+        ResponseEntity<?> response = controller.cancelQueue(auth);
 
-        assertThat(response.getStatusCode().value()).isEqualTo(404);
+        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+        @SuppressWarnings("unchecked")
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        assertThat(body.get("httpStatus")).isEqualTo(404);
     }
 
     @Test

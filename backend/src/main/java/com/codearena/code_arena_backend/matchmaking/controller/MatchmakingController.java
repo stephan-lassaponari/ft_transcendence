@@ -8,7 +8,6 @@ import com.codearena.code_arena_backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
@@ -42,13 +41,12 @@ public class MatchmakingController {
      * Idempotent — returns 200 even if already queued.
      */
     @PostMapping("/queue")
-    public ResponseEntity<MatchmakingEvent> enqueue(Principal principal) {
+    public ResponseEntity<?> enqueue(Principal principal) {
 
         User user = findUser(principal.getName());
 
         if (user.getStatus() == User.UserStatus.IN_DUEL) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(MatchmakingEvent.error("Cannot queue while in a duel."));
+            return ResponseEntity.ok(Map.of("httpStatus", 409, "error", "Cannot queue while in a duel."));
         }
 
         boolean newlyQueued = queueService.enqueue(user.getId(), user.getElo());
@@ -77,7 +75,7 @@ public class MatchmakingController {
      * Removes the authenticated player from the queue.
      */
     @DeleteMapping("/queue")
-    public ResponseEntity<Void> cancelQueue(Principal principal) {
+    public ResponseEntity<?> cancelQueue(Principal principal) {
 
         User user = findUser(principal.getName());
 
@@ -85,7 +83,7 @@ public class MatchmakingController {
             matchmakingService.cancelQueue(user.getId());
             return ResponseEntity.noContent().build();
         } catch (IllegalStateException e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.ok(Map.of("httpStatus", 404, "error", "User is not in the queue"));
         }
     }
 
@@ -106,16 +104,6 @@ public class MatchmakingController {
         );
 
         return ResponseEntity.ok(body);
-    }
-
-    // ------------------------------------------------------------------ //
-    //  Exception handlers                                                 //
-    // ------------------------------------------------------------------ //
-
-    @ExceptionHandler(NoSuchElementException.class)
-    public ResponseEntity<Map<String, String>> handleNotFound(NoSuchElementException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Map.of("error", ex.getMessage()));
     }
 
     // ------------------------------------------------------------------ //

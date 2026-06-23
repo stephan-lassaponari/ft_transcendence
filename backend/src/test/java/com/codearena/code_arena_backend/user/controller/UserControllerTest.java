@@ -25,8 +25,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -147,17 +145,6 @@ class UserControllerTest {
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
         assertThat(response.getHeaders().getContentType()).isEqualTo(MediaType.valueOf("image/svg+xml"));
         assertThat(response.getBody()).isNotNull();
-    }
-
-    @Test
-    @DisplayName("handleNotFound returns HTTP 404")
-    void handleNotFound_returns404() {
-        ResponseEntity<Map<String, String>> response =
-                userController.handleNotFound(new NoSuchElementException("User not found: 9"));
-
-        assertThat(response.getStatusCode().value()).isEqualTo(404);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().get("error")).contains("9");
     }
 
     // ------------------------------------------------------------------ //

@@ -1,7 +1,7 @@
-import { HttpInterceptorFn } from '@angular/common/http';
+import { HttpErrorResponse, HttpEvent, HttpInterceptorFn, HttpResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { AuthService } from '../services/auth.service';
-import { catchError, throwError } from 'rxjs';
+import { catchError, map, throwError } from 'rxjs';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
@@ -24,6 +24,25 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   }
 
   return next(req).pipe(
+    map((event: HttpEvent<any>) => {
+      // The backend returns HTTP 200 with { httpStatus, error } for all errors so that
+      // the browser's native network-error logger is never triggered.
+      // Detect that envelope here and re-emit as an HttpErrorResponse so existing
+      // component error handlers keep working unchanged.
+      if (
+        event instanceof HttpResponse &&
+        event.body?.httpStatus &&
+        event.body?.error
+      ) {
+        throw new HttpErrorResponse({
+          error: event.body,
+          status: event.body.httpStatus,
+          statusText: event.body.error,
+          url: req.url,
+        });
+      }
+      return event;
+    }),
     catchError((error) => {
       // If the backend rejects with 401 (invalid/expired token),
       // force logout and redirect to login — don't show a broken page.
