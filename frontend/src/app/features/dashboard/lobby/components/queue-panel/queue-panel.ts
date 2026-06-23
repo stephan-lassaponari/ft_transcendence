@@ -48,8 +48,7 @@ export class QueuePanel implements OnDestroy {
         this.startQueueTimer();
         this.subscribeToMatchmaking();
       },
-      error: (err: unknown) => {
-        console.error('Failed to join queue:', err);
+      error: () => {
         this.errorMessage.set('Failed to join queue. Please try again.');
       },
     });
@@ -60,8 +59,7 @@ export class QueuePanel implements OnDestroy {
   private cancelQueue(): void {
     this.matchmakingService.leaveQueue().subscribe({
       next: () => this.resetQueueState(),
-      error: (err: unknown) => {
-        console.error('Failed to leave queue:', err);
+      error: () => {
         // Resetar mesmo em caso de erro para não bloquear a UI.
         this.resetQueueState();
       },

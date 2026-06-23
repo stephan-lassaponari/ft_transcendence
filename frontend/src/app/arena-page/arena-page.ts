@@ -114,7 +114,6 @@ export class ArenaPage implements OnInit, OnDestroy {
     this.duelService.getActiveDuel().subscribe({
       next: (activeDuel) => {
         if (!activeDuel) {
-          console.warn('No active duel found in arena page → redirecting to lobby');
           this.router.navigate(['/lobby']);
           return;
         }
@@ -122,7 +121,7 @@ export class ArenaPage implements OnInit, OnDestroy {
         this.challengeId.set(activeDuel.challengeId);
         this.opponentName.set(activeDuel.opponentName);
 
-        console.log('Arena loaded — duelId:', activeDuel.duelId,
+        // console.log('Arena loaded — duelId:', activeDuel.duelId,
           'challengeId:', activeDuel.challengeId, 'opponent:', activeDuel.opponentName);
 
         // Carregar o challenge a partir do challengeId do duel (backend)
@@ -147,8 +146,7 @@ int main() {
 }`);
             }
           },
-          error: (err) => {
-            console.error('Failed to load challenge details:', err);
+          error: () => {
             this.challengeTitle.set('Error loading challenge');
             this.challengeDescription.set('Could not fetch the problem details from the server.');
           }
@@ -164,7 +162,7 @@ int main() {
         // Sync initial state on load/refresh
         this.duelService.getDuelStatus(activeDuel.duelId).subscribe({
           next: (status) => {
-             console.log('Initial duel status sync:', status);
+             // console.log('Initial duel status sync:', status);
              if (status.timeLeftSecs !== undefined) {
                setTimeout(() => this.arenaTimer?.sync(status.timeLeftSecs), 0);
              }
@@ -202,8 +200,7 @@ int main() {
           }
         });
       },
-      error: (err) => {
-        console.error('Failed to load active duel:', err);
+      error: () => {
         // Se não há duel ativo, o guard já deveria ter bloqueado.
         // Redirect de segurança.
         this.router.navigate(['/lobby']);
@@ -216,7 +213,7 @@ int main() {
       return;
     }
     if (event.type !== 'DUEL_TICK') {
-      console.log('Duel WS Event:', event);
+      // console.log('Duel WS Event:', event);
     }
     switch (event.type) {
       case 'DUEL_TICK':
@@ -390,7 +387,6 @@ int main() {
         this.runLoading.set(false);
       },
       error: (err) => {
-        console.error('Run code failed:', err);
         this.runResult.set({
           status: 'runtime_error',
           headline: 'Request Failed',
@@ -452,7 +448,7 @@ int main() {
 
     this.duelService.submitCode(did, { code: this.code(), language: this.selectedLanguage() }).subscribe({
       next: (res) => {
-        console.log('Submission accepted by server:', res);
+        // console.log('Submission accepted by server:', res);
         this.submissionResult.set({
            verdict: 'submitted',
            headline: 'Code Submitted',
@@ -462,8 +458,7 @@ int main() {
         this.resultPanelOpen.set(true);
         this.closeRunPanel();
       },
-      error: (err) => {
-        console.error('Failed to submit code:', err);
+      error: () => {
       }
     });
   }

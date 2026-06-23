@@ -70,8 +70,7 @@ export class ProfileSettings implements OnInit {
         next: (user) => {
           this.initForms(user);
         },
-        error: (err) => {
-          console.error('Failed to load profile:', err);
+        error: () => {
           this.initForms({ username: '', email: '' });
         }
       });

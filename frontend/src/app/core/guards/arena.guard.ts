@@ -27,8 +27,6 @@ export const arenaGuard: CanActivateFn = (_route, _state) => {
   return duelService.getActiveDuel().pipe(
     map((activeDuel) => {
       if (!activeDuel) {
-        // Sem duel ativo — o user não deveria estar na arena
-        console.warn('[ArenaGuard] Sem duel ativo → redirect para lobby');
         return router.createUrlTree(['/lobby']);
       }
       // Duel ativo existe — permitir acesso à arena
@@ -41,12 +39,8 @@ export const arenaGuard: CanActivateFn = (_route, _state) => {
         return of(router.createUrlTree(['/login']));
       }
       if (err.status === 404) {
-        // Sem duel ativo — o user não deveria estar na arena
-        console.warn('[ArenaGuard] Sem duel ativo → redirect para lobby');
         return of(router.createUrlTree(['/lobby']));
       }
-      // Erro de rede — permitir (backend protege via 403 nos endpoints)
-      console.warn('[ArenaGuard] Erro a verificar duel ativo:', err.status);
       return of(true);
     })
   );

@@ -49,17 +49,15 @@ export class WebSocketService implements OnDestroy {
 
       onConnect: () => {
         this.state.next(SocketState.CONNECTED);
-        console.log('Successfully connected to WebSocket');
+        // console.log('Successfully connected to WebSocket');
       },
 
       onDisconnect: () => {
         this.state.next(SocketState.DISCONNECTED);
-        console.log('Disconnected from WebSocket');
+        // console.log('Disconnected from WebSocket');
       },
 
-      onStompError: (frame: any) => {
-        console.error('Broker reported error: ' + frame.headers['message']);
-        console.error('Additional details: ' + frame.body);
+      onStompError: (_frame: any) => {
       },
 
       onWebSocketError: (event: any) => {
