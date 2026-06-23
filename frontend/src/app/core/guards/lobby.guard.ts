@@ -29,8 +29,6 @@ export const lobbyGuard: CanActivateFn = (_route, _state) => {
   return duelService.getActiveDuel().pipe(
     map((activeDuel) => {
       if (activeDuel) {
-        // Há um duel ativo → redirecionar para a arena
-        console.warn('[LobbyGuard] User has active duel', activeDuel.duelId, '→ redirect to arena');
         return router.createUrlTree(['/arena']);
       }
       // Nenhum duel ativo → permitir
@@ -46,8 +44,6 @@ export const lobbyGuard: CanActivateFn = (_route, _state) => {
         // Nenhum duel ativo → permitir
         return of(true);
       }
-      // Erro de rede/servidor → permitir por segurança
-      console.warn('[LobbyGuard] Error checking active duel:', err.status, '— allowing');
       return of(true);
     })
   );

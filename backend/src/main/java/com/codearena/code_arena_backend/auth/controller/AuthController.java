@@ -12,7 +12,11 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
@@ -59,14 +63,13 @@ public class AuthController {
      *         Unauthorized
      */
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(
+    public ResponseEntity<?> login(
             @Valid @RequestBody LoginRequest request,
             HttpServletRequest servletRequest) {
         String clientIp = servletRequest.getRemoteAddr();
 
         if (!rateLimiter.isAllowed(clientIp)) {
-            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
-                    .body(null); // Or a specific error DTO
+            return ResponseEntity.ok(Map.of("httpStatus", 429, "error", "Too many login attempts. Please wait."));
         }
 
         rateLimiter.recordAttempt(clientIp);
@@ -97,26 +100,4 @@ public class AuthController {
         return ResponseEntity.noContent().build();
     }
 
-    /**
-     * Global exception handler for this controller.
-     * IllegalArgumentException covers "username taken", "email taken", etc.
-     * BadCredentialsException is handled here too for a clean 401 response.
-     */
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Map<String, String>> handleBadRequest(IllegalArgumentException ex) {
-        return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
-    }
-
-    @ExceptionHandler(org.springframework.security.authentication.BadCredentialsException.class)
-    public ResponseEntity<Map<String, String>> handleBadCredentials(
-            org.springframework.security.authentication.BadCredentialsException ex) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(Map.of("error", "Invalid username or password"));
-    }
-
-    @ExceptionHandler(io.jsonwebtoken.JwtException.class)
-    public ResponseEntity<Map<String, String>> handleJwtException(io.jsonwebtoken.JwtException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("error", "Invalid or expired token"));
-    }
 }

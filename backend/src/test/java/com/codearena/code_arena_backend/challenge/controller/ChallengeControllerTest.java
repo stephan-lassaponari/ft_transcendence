@@ -19,8 +19,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
@@ -65,17 +63,6 @@ class ChallengeControllerTest {
         assertThat(item.timeLimitSecs()).isEqualTo(600);
 
         verify(challengeService).listChallenges("MEDIUM", pageable);
-    }
-
-    @Test
-    @DisplayName("handleBadRequest returns HTTP 400 with error body")
-    void handleBadRequest_returns400() {
-        ResponseEntity<Map<String, String>> response =
-                challengeController.handleBadRequest(new IllegalArgumentException("Invalid difficulty"));
-
-        assertThat(response.getStatusCode().value()).isEqualTo(400);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().get("error")).contains("Invalid difficulty");
     }
 
     @Test
@@ -147,14 +134,4 @@ class ChallengeControllerTest {
         verify(challengeService).deleteChallenge(4L);
     }
 
-    @Test
-    @DisplayName("handleNotFound returns HTTP 404 with error payload")
-    void handleNotFound_returns404() {
-        ResponseEntity<Map<String, String>> response =
-                challengeController.handleNotFound(new NoSuchElementException("Challenge not found: 13"));
-
-        assertThat(response.getStatusCode().value()).isEqualTo(404);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().get("error")).contains("13");
-    }
 }

@@ -1,5 +1,5 @@
-/* ── Opponent-finished notification ──────────────────────────── */
-.opponent-notif {
+/* ── Duel notification banner ────────────────────────────────── */
+.duel-notif {
   position: absolute;
   top: 12px;
   right: 24px;
@@ -7,14 +7,25 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  background: rgba(20, 6, 6, 0.97);
-  border: 1px solid var(--color-defeat);
   border-radius: 8px;
   padding: 12px 16px;
   min-width: 320px;
   max-width: 480px;
-  box-shadow: 0 4px 24px rgba(239, 68, 68, 0.25);
   animation: notif-in 0.2s ease;
+}
+
+/* Urgent variant (opponent's POV — red) */
+.duel-notif--urgent {
+  background: rgba(20, 6, 6, 0.97);
+  border: 1px solid var(--color-defeat);
+  box-shadow: 0 4px 24px rgba(239, 68, 68, 0.25);
+}
+
+/* Informational variant (submitter's POV — green) */
+.duel-notif--info {
+  background: rgba(6, 20, 10, 0.97);
+  border: 1px solid var(--color-victory, #22c55e);
+  box-shadow: 0 4px 24px rgba(34, 197, 94, 0.25);
 }
 
 @keyframes notif-in {
@@ -22,35 +33,37 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-.opponent-notif-icon {
+.duel-notif-icon {
   font-size: 20px;
-  color: var(--color-defeat);
   flex-shrink: 0;
   line-height: 1;
 }
+.duel-notif--urgent .duel-notif-icon { color: var(--color-defeat); }
+.duel-notif--info   .duel-notif-icon { color: var(--color-victory, #22c55e); }
 
-.opponent-notif-body {
+.duel-notif-body {
   display: flex;
   flex-direction: column;
   gap: 2px;
   flex: 1;
 }
 
-.opponent-notif-title {
+.duel-notif-title {
   font-family: var(--font-system);
   font-size: 13px;
   font-weight: 700;
-  color: var(--color-defeat);
   letter-spacing: 0.03em;
 }
+.duel-notif--urgent .duel-notif-title { color: var(--color-defeat); }
+.duel-notif--info   .duel-notif-title { color: var(--color-victory, #22c55e); }
 
-.opponent-notif-sub {
+.duel-notif-sub {
   font-family: var(--font-system);
   font-size: 11px;
   color: var(--text-muted);
 }
 
-.opponent-notif-close {
+.duel-notif-close {
   background: transparent;
   border: none;
   color: var(--text-dim);
@@ -62,7 +75,7 @@
   transition: color 0.15s;
 }
 
-.opponent-notif-close:hover {
+.duel-notif-close:hover {
   color: var(--text);
 }
 
@@ -890,4 +903,93 @@
   background: rgba(239, 68, 68, 0.3);
   border-color: rgba(239, 68, 68, 0.8);
   box-shadow: 0 0 12px rgba(239, 68, 68, 0.3);
+}
+
+/* ── Mobile responsive ───────────────────────────────────────── */
+@media (max-width: 768px) {
+  .arena-shell {
+    --panel-width: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .problem-panel {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    max-height: 30vh;
+    min-height: 80px;
+    flex-shrink: 0;
+    overflow-y: auto;
+  }
+
+  .resize-handle {
+    display: none;
+  }
+
+  .editor-panel {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .editor-area {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .editor-topbar {
+    padding: 0 8px;
+    height: 38px;
+  }
+
+  .editor-topbar-left {
+    gap: 6px;
+  }
+
+  .theme-btn {
+    font-size: 10px;
+    padding: 3px 8px;
+  }
+
+  .duel-notif {
+    right: 8px;
+    left: 8px;
+    min-width: auto;
+    max-width: none;
+    top: 8px;
+  }
+
+  .footer-bar {
+    padding: 8px 10px;
+    gap: 8px;
+    min-height: 48px;
+    flex-wrap: wrap;
+  }
+
+  .footer-left {
+    min-width: 0;
+  }
+
+  .footer-body--split {
+    flex-direction: column;
+  }
+
+  .result-cases {
+    width: 100%;
+    flex-direction: row;
+    overflow-x: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding: 8px;
+  }
+
+  .run-btn,
+  .submit-btn,
+  .leave-btn {
+    font-size: 11px;
+    padding: 6px 12px;
+  }
 }

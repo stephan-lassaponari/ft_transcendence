@@ -41,7 +41,7 @@ Players register, join a ranked matchmaking queue, get paired with an opponent o
 - **Real-Time Chat** — Direct messaging between users via WebSocket (STOMP/SockJS).
 - **Friend System** — Send, accept, and manage friend requests with online status visibility.
 - **Notification System** — Real-time notifications for duel results, friend requests, and system events.
-- **Gamification** — Achievements, badges, and win streak tracking to reward player progression.
+- **Gamification** — League tiers, Elo progression, and win-streak bonuses to reward player progression.
 - **User Profiles** — Customizable profiles with avatar upload, match history, and detailed statistics.
 - **Challenge Bank** — Curated set of challenges across four difficulty tiers (Easy, Medium, Hard, Insane) with JSONB-stored test cases.
 
@@ -151,9 +151,9 @@ For developers requiring hot-reloading and IDE integration, a "Hybrid" workflow 
 
 | Member     | Role(s)                       | Primary Area | Responsibilities                                                                                             |
 |------------|-------------------------------|--------------|--------------------------------------------------------------------------------------------------------------|
-| **tjorge-l** | Product Owner + Engineer    | Backend      | Owns and prioritizes the product backlog; writes and approves acceptance criteria; makes final feature acceptance calls at sprint reviews; contributes to backend development. |
-| **tborges-** | Scrum Master / PM + Engineer| Backend      | Facilitates all sprint ceremonies; maintains the GitHub Project board; tracks module point progress; responds to blockers; contributes to backend development.                 |
-| **strodrig** | Tech Lead + Engineer        | Frontend     | Makes final architectural and technology decisions; reviews critical PRs (DB schema, auth, WebSocket, Judge0 integration); records architectural decisions; leads frontend development. |
+| **tjorge-l** | Scrum Master + Engineer     | Backend      | Facilitates all sprint ceremonies; maintains the GitHub Project board; tracks module point progress; responds to blockers; contributes to backend development.                 |
+| **tborges-** | Tech Lead + Engineer        | Backend      | Makes final architectural and technology decisions; reviews critical PRs (DB schema, auth, WebSocket, Judge0 integration); records architectural decisions; leads backend development. |
+| **strodrig** | Product Owner + Engineer    | Frontend     | Owns and prioritizes the product backlog; writes and approves acceptance criteria; makes final feature acceptance calls at sprint reviews; contributes to frontend development. |
 | **hepereir** | Engineer                    | Frontend     | Implements frontend features; creates tests; performs code reviews; maintains board issue status; contributes to UI/UX design and frontend components.                          |
 
 > All team members contributed code every sprint and participated in code reviews. Role titles describe primary responsibilities, not exclusive domains.
@@ -391,7 +391,7 @@ erDiagram
 
 ### Schema Management
 
-The database schema is managed through **15 Flyway migration files** located in `backend/src/main/resources/db/migration/`. Migrations are applied automatically on application startup. Hibernate operates in `validate` mode in production, ensuring entity classes stay in sync with the actual schema without making uncontrolled changes.
+The database schema is managed through **25 Flyway migration files** located in `backend/src/main/resources/db/migration/`. Migrations are applied automatically on application startup. Hibernate operates in `validate` mode in production, ensuring entity classes stay in sync with the actual schema without making uncontrolled changes.
 
 ---
 
@@ -408,13 +408,14 @@ The database schema is managed through **15 Flyway migration files** located in 
 | **Monaco Code Editor**      | In-browser code editor with syntax highlighting, integrated into the Arena page with timer and opponent status.   | strodrig, hepereir    |
 | **Real-Time Communication** | STOMP/SockJS WebSocket infrastructure for live duel updates, matchmaking events, and chat.                       | tborges-, strodrig    |
 | **Leaderboard**             | Global ranking display with league filters. Shows Elo, win rate, and league badges.                              | strodrig, hepereir    |
-| **Chat System**             | Real-time direct messaging between users via WebSocket.                                                          | tborges-, hepereir    |
-| **Notification System**     | Real-time notifications for duel results, friend requests, and system events. Delivered via WebSocket with JSONB payloads. | tborges-, strodrig |
-| **Gamification**            | League system (Bronze → Legend), achievements, badges, and win streak tracking.                                  | tjorge-l, hepereir    |
-| **Challenge Bank**          | Curated set of C programming challenges across 4 difficulty tiers (Easy, Medium, Hard, Insane) with automated test cases. | tjorge-l          |
+| **Chat System**             | Real-time direct messaging between users via WebSocket.                                                          | tjorge-l, hepereir    |
+| **Notification System**     | Real-time notifications for duel results, friend requests, and system events. Delivered via WebSocket with JSONB payloads. | tjorge-l, strodrig |
+| **Gamification**            | League system (Bronze → Legend), Elo progression, and win streak tracking.                                       | tjorge-l, hepereir    |
+| **OAuth 2.0 Login**         | Sign in with GitHub or 42 Intra as an alternative to email/password.                                             | tborges-    |
+| **Challenge Bank**          | Curated set of C programming challenges across 4 difficulty tiers (Easy, Medium, Hard, Insane) with automated test cases. | tborges-          |
 | **Duel Scoring**            | Composite scoring formula: 40% submission time + 30% performance + 20% correctness bonus + 10% code quality.    | tborges-              |
 | **Landing Page & About**    | Public-facing pages with project information and navigation.                                                     | strodrig, hepereir    |
-| **Nginx Reverse Proxy**     | SSL termination, HTTP→HTTPS redirect, WebSocket proxying, and SPA routing.                                      | tborges-              |
+| **Nginx Reverse Proxy**     | SSL termination, HTTP→HTTPS redirect, WebSocket proxying, and SPA routing.                                      | tjorge-l, stodrig              |
 | **Docker Deployment**       | Single-command deployment via `docker compose up` with 9 orchestrated services.                                  | tborges-, tjorge-l    |
 
 ---
@@ -434,14 +435,15 @@ The database schema is managed through **15 Flyway migration files** located in 
 | 7  | User Interaction (Chat + Profile + Friends)                  | Major | 2      | Sprint 4      | ✅     |
 | 8  | ORM — Hibernate / Spring Data JPA                            | Minor | 1      | Sprint 4      | ✅     |
 | 9  | Notification System                                          | Minor | 1      | Sprint 4      | ✅     |
-| 10 | Gamification (Achievements, Badges, Leagues)                 | Minor | 1      | Sprint 4      | ✅     |
-|    | **Total**                                                    |       | **16** |               |        |
+| 10 | Gamification (Leagues, Elo, Win Streaks)                      | Minor | 1      | Sprint 4      | ✅     |
+| 11 | Remote Authentication with OAuth 2.0 (GitHub & 42)            | Minor | 1      | Sprint 4      | ✅     |
+|    | **Total**                                                    |       | **17** |               |        |
 
 ### Point Calculation
 
 - **Major modules:** 6 × 2 = **12 points**
-- **Minor modules:** 4 × 1 = **4 points**
-- **Total: 16 points** (2-point buffer above the required minimum of 14)
+- **Minor modules:** 5 × 1 = **5 points**
+- **Total: 17 points** (3-point buffer above the required minimum of 14)
 
 ### Module Details
 
@@ -573,79 +575,107 @@ The database schema is managed through **15 Flyway migration files** located in 
 
 ---
 
-#### Module 10 — Gamification: Achievements, Badges & Leagues (Minor — 1 pt)
+#### Module 10 — Gamification: Leagues, Elo & Win Streaks (Minor — 1 pt)
 
-**Justification:** Gamification drives player engagement and retention through tangible progression markers beyond raw Elo.
+**Justification:** Gamification drives player engagement and retention through tangible progression markers beyond raw Elo. The system implements three of the mechanisms listed in the subject: a **leaderboard**, a **level/tier system** (leagues), and **rewards** (win-streak LP bonuses).
 
 **Implementation:**
-- League system with 5 tiers: Bronze (0–999), Silver (1000–1999), Gold (2000–2999), Master (3000+), Legend (top 1%).
-- Win streak tracking with bonus LP for consecutive wins.
-- Achievement and badge system rewarding milestones (first win, win streaks, league promotions, etc.).
-- League-specific UI elements and visual indicators.
+- League system with 5 tiers persisted on the `users` table: Bronze (0–999), Silver (1000–1999), Gold (2000–2999), Master (3000+), Legend (top 1% of Master+, recalculated via a ranked SQL query in `UserRepository`).
+- Win streak counter (`win_streak`) with bonus LP awarded for consecutive wins, persisted per user.
+- Global leaderboard with league filters, fed directly by the persisted Elo/league columns.
+- League-specific UI badges and visual indicators in the profile and leaderboard views.
 
-**Team:** tjorge-l (backend), hepereir (frontend)
+**Team:** tjorge-l (backend Elo/league logic), hepereir (frontend)
+
+---
+
+#### Module 11 — Remote Authentication with OAuth 2.0 (Minor — 1 pt)
+
+**Justification:** In addition to email/password authentication, the subject allows additional auth methods (OAuth, 2FA, etc.) to be claimed as a module. Code Arena lets users sign in with an existing **GitHub** or **42 Intra** account instead of creating a new password.
+
+**Implementation:**
+- `OAuth2Controller` + `OAuth2Service` handle the provider redirect, callback, and account linking/creation flow for both providers.
+- `OAuth2ProviderConfig` and `OAuth2UserInfo` normalize the differing profile payloads returned by GitHub and 42.
+- New nullable `oauth_provider` / `oauth_provider_id` columns (migration `V17__oauth_provider_fields.sql`) link an OAuth identity to a `users` row without breaking password-based accounts; a unique constraint prevents duplicate links.
+- Frontend `oauth-callback` route exchanges the provider code for the app's own JWT pair, so the rest of the app is unaware of which auth method was used.
+
+**Team:** tborges- (backend OAuth flow, PR #71), tjorge-l (frontend callback integration)
 
 ---
 
 ## Individual Contributions
 
-### tborges- — Product Owner + Backend Engineer
-
-<!-- TODO: tborges- — Fill in your individual contributions below -->
+### tborges- — Tech Lead + Backend Engineer
 
 **Features & Modules Implemented:**
-- *[Describe the specific features, modules, and components you implemented]*
+- Backend project scaffold (Spring Boot, Security config).
+- Challenge bank backend (`challenges` table, difficulty tiers, seed data) and the duel engine's challenge-assignment logic.
+- User feature backend (profile, avatar upload) and the Elo-based matchmaking queue (Redis).
+- Judge0 integration (sandboxed execution client, resource-limit configuration).
+- Duel lifecycle backend (`WAITING → IN_DUEL → COMPLETED` state machine, composite scoring formula).
+- OAuth 2.0 backend flow (GitHub & 42 Intra) — `OAuth2Controller`, `OAuth2Service`, provider config.
+- Final stabilization pass: browser console error cleanup, the "code disappears after submit" bug, and submission-flow polish before the deadline.
 
 **Key Responsibilities:**
-- *[Describe your PO duties and backend engineering work]*
+- As Tech Lead, made the core backend architecture calls (matchmaking design, duel state machine, Judge0 sandbox isolation) and reviewed integration-critical PRs touching the database schema and execution pipeline.
+- Authored most of the project's foundational backend modules — matchmaking, the duel engine, and Judge0 sandboxing — which the rest of the team built on top of.
 
 **Challenges & Solutions:**
-- *[Describe any significant challenges you faced and how you overcame them]*
+- Integrating Judge0 as an isolated service (separate Postgres/Redis from the main app) required careful Docker networking and resource-limit tuning (CPU/memory/process caps) to keep sandboxed execution both safe and fast enough for a live duel.
+- The Elo-based matchmaking queue needed to expand its search range over time so players wouldn't wait indefinitely for an opponent within a tight Elo band — solved with a progressive range-expansion strategy in the Redis-backed queue.
 
 ---
 
-### strodrig — Scrum Master / PM + Frontend Engineer
-
-<!-- TODO: strodrig — Fill in your individual contributions below -->
+### strodrig — Product Owner + Frontend Engineer
 
 **Features & Modules Implemented:**
-- *[Describe the specific features, modules, and components you implemented]*
+- Initial project documentation and scaffold (`project-code-arena.md` concept doc, repo structure).
+- Authentication pages (login, register) and the public About page.
+- Lobby dashboard (queue entry point, profile summary card).
+- Backend/frontend auth integration, including a fix to the JWT filter and CORS configuration that was blocking authenticated requests after the initial scaffold.
 
 **Key Responsibilities:**
-- *[Describe your PM/Scrum Master duties and backend engineering work]*
+- As Product Owner, wrote the initial product concept (`project-code-arena.md`) that defined the project's scope and feature set, and prioritized which auth/lobby features shipped first each sprint.
+- Implemented and accepted the core early product surface (login, register, About, lobby dashboard) that the rest of the frontend was built around.
 
 **Challenges & Solutions:**
-- *[Describe any significant challenges you faced and how you overcame them]*
+- Early JWT/CORS misconfiguration caused authenticated frontend requests to fail right after the backend scaffold landed; diagnosed and fixed the Spring Security filter chain and `CORS_ALLOWED_ORIGINS` setup so the frontend could call protected endpoints reliably.
 
 ---
 
-### tjorge-l — Tech Lead + Backend Engineer
-
-<!-- TODO: tjorge-l — Fill in your individual contributions below -->
+### tjorge-l — Scrum Master + Backend Engineer
 
 **Features & Modules Implemented:**
-- *[Describe the specific features, modules, and components you implemented]*
+- Initial project plan, Git/GitHub policy, and sprint roadmap documents that shaped how the backlog was organized.
+- Nginx reverse-proxy configuration with HTTPS (self-signed cert termination, SPA + API routing).
+- JWT authentication backend (access + refresh token issuance and validation).
+- WebSocket backbone for chat and notifications (STOMP configuration, auth interceptor), later wired into the chat UI and unread-message notifications, plus a related timezone bug fix.
+- Profile-settings integration between backend and frontend.
+- Friends management feature (request/accept/reject, friends list).
+- Browser console error fixes — removed stray `console.*` calls and resolved warnings flagged during the final QA pass.
 
 **Key Responsibilities:**
-- *[Describe your Tech Lead duties and frontend engineering work]*
+- As Scrum Master, authored the Git/GitHub policy and sprint roadmap used to run ceremonies, groom the backlog, and track module-point progress across all four sprints.
+- Owned the real-time messaging stack end-to-end (WebSocket transport → chat → notifications), one of the project's Major modules.
 
 **Challenges & Solutions:**
-- *[Describe any significant challenges you faced and how you overcame them]*
+- Wiring a single STOMP/SockJS broker to serve both chat and notification traffic without cross-talk required a clear topic/queue naming convention and an authenticated handshake interceptor, implemented once and reused for both features.
+- A timezone mismatch between the backend (UTC) and the frontend's local rendering caused incorrect "received at" timestamps in chat/notifications; fixed by standardizing on UTC storage with client-side localization.
 
 ---
 
 ### hepereir — Frontend Engineer
 
-<!-- TODO: hepereir — Fill in your individual contributions below -->
-
 **Features & Modules Implemented:**
-- *[Describe the specific features, modules, and components you implemented]*
+- Public About page.
+- Challenge page (challenge detail/preview view used before and during a duel).
+- Navbar avatar dropdown and auth-aware call-to-actions shown across the public pages.
 
 **Key Responsibilities:**
-- *[Describe your frontend engineering work]*
+- Implemented frontend features for the public-facing and lobby areas of the app and kept the navbar's authenticated/unauthenticated states consistent across routes.
 
 **Challenges & Solutions:**
-- *[Describe any significant challenges you faced and how you overcame them]*
+- The navbar needed to reflect the user's auth state (logged out vs. logged in, with avatar) consistently across public pages and the authenticated app shell; solved by centralizing the auth-aware navbar logic in one shared component fed by the auth state service rather than duplicating conditionals per page.
 
 ---
 
@@ -698,8 +728,9 @@ AI tools were used in the following limited capacities during development:
 
 - **Self-signed SSL certificates** — The deployment uses self-signed certificates generated by `setup.sh`. For production use, proper certificates (e.g., via Let's Encrypt) should be configured.
 - **Single language support** — The current challenge bank supports only C (language ID 50 in Judge0). Multi-language support is planned for future iterations.
-- **No OAuth integration** — Social login (GitHub, 42, Google) was planned as a bonus module but was not implemented.
+- **No achievements/badges entity** — The gamification module covers leagues, Elo, win streaks, and the leaderboard, but there is no dedicated achievements/badges table; progression is expressed entirely through league tier and Elo.
 - **No spectator mode** — Live duel spectating was planned as a bonus module but was not implemented.
+- **No 2FA or i18n** — Two-factor authentication and multi-language (i18n) support were not implemented.
 - **Local deployment only** — The application is designed for local/single-server deployment. Horizontal scaling would require additional infrastructure (load balancer, shared Redis, etc.).
 
 ---
@@ -707,6 +738,5 @@ AI tools were used in the following limited capacities during development:
 ## License
 
 This project was developed as part of the 42 school curriculum and is intended for educational purposes.
-The database schema is managed via **Flyway** migrations. Detailed operational procedures, including backup and restore logic, are documented in the [Database Operations Guide](documentation/database/operations.md).
 
 ---

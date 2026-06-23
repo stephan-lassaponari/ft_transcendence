@@ -114,7 +114,6 @@ export class ArenaPage implements OnInit, OnDestroy {
     this.duelService.getActiveDuel().subscribe({
       next: (activeDuel) => {
         if (!activeDuel) {
-          console.warn('No active duel found in arena page → redirecting to lobby');
           this.router.navigate(['/lobby']);
           return;
         }
@@ -122,8 +121,8 @@ export class ArenaPage implements OnInit, OnDestroy {
         this.challengeId.set(activeDuel.challengeId);
         this.opponentName.set(activeDuel.opponentName);
 
-        console.log('Arena loaded — duelId:', activeDuel.duelId,
-          'challengeId:', activeDuel.challengeId, 'opponent:', activeDuel.opponentName);
+        // console.log('Arena loaded — duelId:', activeDuel.duelId,
+          // 'challengeId:', activeDuel.challengeId, 'opponent:', activeDuel.opponentName);
 
         // Carregar o challenge a partir do challengeId do duel (backend)
         this.challengeService.getChallenge(activeDuel.challengeId).subscribe({
@@ -147,8 +146,7 @@ int main() {
 }`);
             }
           },
-          error: (err) => {
-            console.error('Failed to load challenge details:', err);
+          error: () => {
             this.challengeTitle.set('Error loading challenge');
             this.challengeDescription.set('Could not fetch the problem details from the server.');
           }
@@ -164,7 +162,7 @@ int main() {
         // Sync initial state on load/refresh
         this.duelService.getDuelStatus(activeDuel.duelId).subscribe({
           next: (status) => {
-             console.log('Initial duel status sync:', status);
+             // console.log('Initial duel status sync:', status);
              if (status.timeLeftSecs !== undefined) {
                setTimeout(() => this.arenaTimer?.sync(status.timeLeftSecs), 0);
              }
@@ -202,8 +200,7 @@ int main() {
           }
         });
       },
-      error: (err) => {
-        console.error('Failed to load active duel:', err);
+      error: () => {
         // Se não há duel ativo, o guard já deveria ter bloqueado.
         // Redirect de segurança.
         this.router.navigate(['/lobby']);
@@ -216,7 +213,7 @@ int main() {
       return;
     }
     if (event.type !== 'DUEL_TICK') {
-      console.log('Duel WS Event:', event);
+      // console.log('Duel WS Event:', event);
     }
     switch (event.type) {
       case 'DUEL_TICK':
@@ -279,7 +276,15 @@ int main() {
           this.redirectTimeoutId = setTimeout(() => this.router.navigate(['/lobby']), 10000);
         break;
       case 'DUEL_OPPONENT_FINISHED':
-        if (event.username !== this.userService.username()) {
+        const eventUsername = event.username ? String(event.username) : '';
+        const currentUsername = this.userService.username();
+        const currentUserId = String(this.myId());
+
+        if (eventUsername === currentUsername || eventUsername === currentUserId) {
+          // I am the one who submitted — show informational notification
+          this.submitterNotification();
+        } else {
+          // My opponent submitted — show urgent notification
           this.opponentFinished();
         }
         break;
@@ -356,7 +361,7 @@ int main() {
   ngOnDestroy(): void {
     this.stopResize();
     this.stopFooterResize();
-    if (this.notifTimeoutId !== null) clearTimeout(this.notifTimeoutId);
+    if (this.notifTimeoutId !== null) { clearTimeout(this.notifTimeoutId); this.notifTimeoutId = null; }
     if (this.redirectTimeoutId !== null) clearTimeout(this.redirectTimeoutId);
     this.subs.unsubscribe();
     this.wsService.disconnect();
@@ -390,7 +395,6 @@ int main() {
         this.runLoading.set(false);
       },
       error: (err) => {
-        console.error('Run code failed:', err);
         this.runResult.set({
           status: 'runtime_error',
           headline: 'Request Failed',
@@ -452,7 +456,7 @@ int main() {
 
     this.duelService.submitCode(did, { code: this.code(), language: this.selectedLanguage() }).subscribe({
       next: (res) => {
-        console.log('Submission accepted by server:', res);
+        // console.log('Submission accepted by server:', res);
         this.submissionResult.set({
            verdict: 'submitted',
            headline: 'Code Submitted',
@@ -462,8 +466,7 @@ int main() {
         this.resultPanelOpen.set(true);
         this.closeRunPanel();
       },
-      error: (err) => {
-        console.error('Failed to submit code:', err);
+      error: () => {
       }
     });
   }
@@ -474,8 +477,14 @@ int main() {
     // Trying to submit code now would result in a 409 Conflict error, so we do nothing.
   }
 
-  /** Whether the opponent-finished notification banner is visible. */
-  showOpponentNotif = signal(false);
+  /** Whether a duel notification banner is visible. */
+  showDuelNotif = signal(false);
+
+  /**
+   * Indicates if the current notification is for the submitter (true) or
+   * for the opponent who still needs to submit (false).
+   */
+  isSubmitterNotif = signal(false);
 
   private notifTimeoutId: ReturnType<typeof setTimeout> | null = null;
   private redirectTimeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -486,13 +495,28 @@ int main() {
    */
   opponentFinished(): void {
     this.arenaTimer?.opponentFinished();
-    this.showOpponentNotif.set(true);
-    if (this.notifTimeoutId !== null) clearTimeout(this.notifTimeoutId);
-    this.notifTimeoutId = setTimeout(() => this.showOpponentNotif.set(false), 5000);
+    const verdict = this.submissionResult()?.verdict;
+    if (verdict !== 'submitted' && verdict !== 'evaluating') {
+      this.isSubmitterNotif.set(false);
+      this.showDuelNotif.set(true);
+      if (this.notifTimeoutId !== null) clearTimeout(this.notifTimeoutId);
+      this.notifTimeoutId = setTimeout(() => this.showDuelNotif.set(false), 5000);
+    }
   }
 
-  dismissOpponentNotif(): void {
-    this.showOpponentNotif.set(false);
+  /**
+   * Call this when the current user is the first to submit.
+   * Shows a notification telling them the opponent now has 1 minute left.
+   */
+  submitterNotification(): void {
+    this.isSubmitterNotif.set(true);
+    this.showDuelNotif.set(true);
+    if (this.notifTimeoutId !== null) clearTimeout(this.notifTimeoutId);
+    this.notifTimeoutId = setTimeout(() => this.showDuelNotif.set(false), 5000);
+  }
+
+  dismissDuelNotif(): void {
+    this.showDuelNotif.set(false);
     if (this.notifTimeoutId !== null) {
       clearTimeout(this.notifTimeoutId);
       this.notifTimeoutId = null;

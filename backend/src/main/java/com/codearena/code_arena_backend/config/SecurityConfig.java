@@ -62,6 +62,21 @@ public class SecurityConfig {
             // Apply CORS rules defined in CorsConfig.
             .cors(Customizer.withDefaults())
 
+            // Return HTTP 200 with a structured error body instead of 401/403 so the
+            // browser's native network-error logger is never triggered.
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint((request, response, authException) -> {
+                    response.setStatus(200);
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"httpStatus\":401,\"error\":\"Authentication required\"}");
+                })
+                .accessDeniedHandler((request, response, accessDeniedException) -> {
+                    response.setStatus(200);
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"httpStatus\":403,\"error\":\"Access denied\"}");
+                })
+            )
+
             // Route authorisation rules.
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints — only specific auth routes, health and WS are public.
