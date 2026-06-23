@@ -126,11 +126,13 @@
         <div class="footer-right">
           @if (submissionResult()?.verdict === 'success') {
             <button class="leave-btn" type="button" (click)="leaveArena()">Leave Arena</button>
+          } @else if (submissionResult()?.verdict === 'submitted' || submissionResult()?.verdict === 'evaluating') {
+            <!-- Buttons hidden post-submission -->
           } @else {
-            <button class="run-btn" type="button" (click)="runCode()" [disabled]="runLoading() || !isDuelActive() || submissionResult()?.verdict === 'submitted' || submissionResult()?.verdict === 'evaluating'">
+            <button class="run-btn" type="button" (click)="runCode()" [disabled]="runLoading() || !isDuelActive()">
               {{ runLoading() ? 'Running...' : 'Run Code' }}
             </button>
-            <button class="submit-btn" type="button" (click)="submitCode()">Submit Code</button>
+            <button class="submit-btn" type="button" (click)="submitCode()" [disabled]="!isDuelActive()">Submit Code</button>
           }
         </div>
       </div>
